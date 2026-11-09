@@ -1,6 +1,12 @@
 name: Build personal RustDesk NAS clients
 'on':
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      mac-only:
+        description: Rebuild only the Intel Mac edition
+        required: false
+        type: boolean
+        default: false
 env:
   SCITER_RUST_VERSION: '1.75'
   RUST_VERSION: '1.75'
@@ -30,6 +36,7 @@ jobs:
   generate-bridge:
     uses: ./.github/workflows/bridge.yml
   build-RustDeskTempTopMostWindow:
+    if: ${{ inputs.mac-only != true }}
     uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
     strategy:
       fail-fast: false
@@ -44,6 +51,7 @@ jobs:
       platform: ${{ matrix.job.platform }}
       target_version: Windows10
   build-for-windows-flutter:
+    if: ${{ inputs.mac-only != true }}
     name: ${{ matrix.job.target }}
     needs:
     - build-RustDeskTempTopMostWindow
@@ -537,6 +545,7 @@ jobs:
       if: env.UPLOAD_ARTIFACT == 'true' && env.PUBLISH_UPDATE_METADATA != 'true'
     timeout-minutes: 180
   build-rustdesk-android:
+    if: ${{ inputs.mac-only != true }}
     needs:
     - generate-bridge
     name: build rustdesk android apk ${{ matrix.job.target }}
@@ -801,6 +810,7 @@ jobs:
       if: env.ANDROID_SIGNING_KEY == null && env.UPLOAD_ARTIFACT == 'true'
     timeout-minutes: 180
   build-rustdesk-android-universal:
+    if: ${{ inputs.mac-only != true }}
     needs:
     - build-rustdesk-android
     name: build rustdesk android universal apk
@@ -964,6 +974,7 @@ jobs:
       if: env.ANDROID_SIGNING_KEY == null && env.UPLOAD_ARTIFACT == 'true'
     timeout-minutes: 180
   build-rustdesk-linux:
+    if: ${{ inputs.mac-only != true }}
     needs:
     - generate-bridge
     name: build rustdesk linux ${{ matrix.job.target }}
@@ -1250,6 +1261,7 @@ jobs:
       if: env.UPLOAD_ARTIFACT == 'true'
     timeout-minutes: 180
   build-appimage:
+    if: ${{ inputs.mac-only != true }}
     name: Build appimage ${{ matrix.job.target }}
     needs:
     - build-rustdesk-linux

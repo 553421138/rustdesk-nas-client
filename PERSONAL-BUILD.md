@@ -163,3 +163,5 @@ Mac 控制端保留本机 Control + ←/→ 给系统切换 Spaces，左右箭�
 Mac 安装包检查在可选品牌核验中读取实际 dylib 的公共同步接口，核对中文名称、内部身份、账号和地址簿开关。新增的 `res/branding/verify_library.py` 只使用 Python 标准库读取既有 FFI，不增加生产接口或应用依赖。Linux 包也使用同一读取方式核验。
 
 AppImage 配方同时保留中文桌面显示名和固定的构建文件名，防止改名改变产物匹配路径。新增 `.github/workflows/package-appimage.yml` 可使用已完成构建的 DEB 单独打包并记录对应运行号，无需重复编译其他平台；使用相同的 AppRun 源码和打包命令。
+
+Mac 的托盘图标读取路径跳过通用彩色 PNG，使用已编译的单色模板，防止新 PNG 覆盖模板后显示成实心方块。该改动仅针对定制 Mac 分支；Windows、Linux 和原版构建路径不变。完整端与顾客版构建工作流增加可选 `mac-only` 输入，默认仍构建全部平台，用于只重编 Intel Mac；ARM 顾客版继续使用独立工作流。

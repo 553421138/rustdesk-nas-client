@@ -299,6 +299,10 @@ async fn start_query_session_count(sender: std::sync::mpsc::Sender<Data>) {
 }
 
 fn load_icon_from_asset() -> Option<image::DynamicImage> {
+    #[cfg(target_os = "macos")]
+    if option_env!("RUSTDESK_NAS_DISPLAY_NAME").is_some() {
+        return None;
+    }
     let Some(path) = std::env::current_exe().map_or(None, |x| x.parent().map(|x| x.to_path_buf()))
     else {
         return None;

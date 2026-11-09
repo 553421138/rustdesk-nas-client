@@ -1,6 +1,12 @@
 name: Build customer incoming-only RustDesk clients
 'on':
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      mac-only:
+        description: Rebuild only the Intel Mac edition
+        required: false
+        type: boolean
+        default: false
 env:
   SCITER_RUST_VERSION: '1.75'
   RUST_VERSION: '1.75'
@@ -31,6 +37,7 @@ jobs:
   generate-bridge:
     uses: ./.github/workflows/bridge.yml
   build-RustDeskTempTopMostWindow:
+    if: ${{ inputs.mac-only != true }}
     uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
     strategy:
       fail-fast: false
@@ -45,6 +52,7 @@ jobs:
       platform: ${{ matrix.job.platform }}
       target_version: Windows10
   build-for-windows-flutter:
+    if: ${{ inputs.mac-only != true }}
     name: ${{ matrix.job.target }}
     needs:
     - build-RustDeskTempTopMostWindow
