@@ -6,7 +6,7 @@
 
 另有 **Build customer incoming-only RustDesk clients**，构建 Windows x64 和 Intel Mac 顾客版：打开后提供本机 ID，每次连接由顾客点击接受，无需提供密码；不能主动连接其他设备或切换控制方向。两种版本都已内置相同服务器。另有 **Build Apple Silicon customer RustDesk client**，单独构建 Apple 芯片 Mac 顾客版。
 
-构建说明、签名和使用注意事项见 [PERSONAL-BUILD.md](PERSONAL-BUILD.md)。完整端四个平台、顾客版 Windows 与 Intel Mac 均已编译并通过对应检查；新增加的 Apple 芯片顾客版已准备构建流程，尚待编译和验证。已完成的自动验证和仍需真机试连的项目见该说明。下方保留上游项目说明。
+构建说明、签名和使用注意事项见 [PERSONAL-BUILD.md](PERSONAL-BUILD.md)。完整端四个平台，以及顾客版 Windows、Intel Mac 和 Apple 芯片 Mac 均已编译并通过对应检查。已完成的自动验证和仍需真机试连的项目见该说明。下方保留上游项目说明。
 
 ---
 

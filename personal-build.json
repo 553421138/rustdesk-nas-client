@@ -14,7 +14,7 @@
   },
   "android_application_id": "cn.hkbeautyshop.rustdesk",
   "configuration_source_sha256": "82cf082f583adced8de7972228129d93500a96df2eb13c549b156cd3f64a063d",
-  "status": "existing requested operator and customer platforms built and checked; added Apple Silicon customer build prepared; interactive device verification pending",
+  "status": "all requested operator and customer platforms built and checked; interactive device verification pending",
   "editions": {
     "operator": {
       "workflow": "personal-build.yml",
@@ -47,14 +47,17 @@
       "macos_bundle_id": "cn.hkbeautyshop.rustdesk.customer",
       "source_commit": "c2c7479f28f3d673b0088b1ebf79040d619b9fc7",
       "build_run": 42550744536,
-      "build_status": "packages produced; native restriction tests passed on both platforms",
+      "build_status": "Windows x64 and Intel Mac packages produced and native restriction tests passed; Apple Silicon results recorded separately below",
       "macos_package_check_run": 42558973698,
       "packaged_click_approval_check": "passed, including attempted password-mode override",
       "apple_silicon": {
         "workflow": "customer-apple-silicon.yml",
         "architecture": "aarch64",
         "minimum_macos": "12.3",
-        "build_status": "prepared; compilation and native package verification pending"
+        "build_status": "success; both native restriction tests and packaged-app startup, network configuration and click-approval checks passed",
+        "source_commit": "7f8a5024f20759c262fcd990e05e48a8bf0e6ebd",
+        "build_run": 42560144179,
+        "macos_package_check_run": 42563946712
       }
     }
   },

@@ -11,7 +11,7 @@
 
 ## 完整端与顾客版
 
-完整端供服务人员使用，保留原有控制和被控功能。顾客版提供 Windows x64、Intel Mac，并正在新增 Apple 芯片 Mac：
+完整端供服务人员使用，保留原有控制和被控功能。顾客版提供 Windows x64、Intel Mac 和 Apple 芯片 Mac：
 
 - 顾客打开软件，把本机 ID（连接码）提供给服务人员。
 - 服务人员使用完整端输入 ID 发起连接，顾客点击“接受”后才能控制，无需提供密码。
@@ -34,7 +34,7 @@ Android 的 applicationId 为 `cn.hkbeautyshop.rustdesk`，可以与官方客户
 
 目标包括 Windows x64 EXE、Android 各架构及通用 APK、macOS Intel DMG、Linux x64 DEB/AppImage。安装包仅保存为 Actions artifacts，不发布公开 Release，保留 7 天。Apple 芯片完整端不在本次构建范围；Apple 芯片顾客版使用下面的独立流程。
 
-Apple 芯片顾客版使用 `.github/workflows/customer-apple-silicon.yml`，在 Actions 启动 **Build Apple Silicon customer RustDesk client**。它使用标准 `macos-15` M1 构建机，启用上游 ARM 版的 ScreenCaptureKit，最低 macOS 12.3，并在原生 ARM 环境运行同样的顾客限制测试。已有 Windows 和 Intel Mac 流程保留。打包后使用 **Check built Mac package**，选择 `customer`、`aarch64` 和对应构建运行编号，检查实际 ARM 应用启动和点击确认模式。当前该平台尚未编译。
+Apple 芯片顾客版使用 `.github/workflows/customer-apple-silicon.yml`，在 Actions 启动 **Build Apple Silicon customer RustDesk client**。它使用标准 `macos-15` M1 构建机，启用上游 ARM 版的 ScreenCaptureKit，最低 macOS 12.3，并在原生 ARM 环境运行同样的顾客限制测试。已有 Windows 和 Intel Mac 流程保留。打包后使用 **Check built Mac package**，选择 `customer`、`aarch64` 和对应构建运行编号，检查实际 ARM 应用启动和点击确认模式。该平台现已编译并通过这些检查，结果见下方记录。
 
 此目录已经将 hbb_common 固定版本作为普通源文件放入，不依赖保留上游 Git 子模块索引。
 
@@ -59,9 +59,11 @@ Apple 芯片顾客版使用 `.github/workflows/customer-apple-silicon.yml`，在
 
 Windows 顾客版的 EXE 和 MSI 已核验内置配置、主动连接限制标记和独立应用身份。Intel Mac 顾客版已核验应用标识、Intel 架构和 DMG 完整性；[实际安装包启动检查](https://github.com/553421138/rustdesk-nas-client/actions/runs/42558973698)确认全新配置下的服务器、公钥和点击确认模式正确，保存密码模式也无法替换点击确认。
 
+Apple 芯片 Mac 顾客版也已完成[原生 ARM 编译、两项限制测试与打包](https://github.com/553421138/rustdesk-nas-client/actions/runs/42560144179)，对应源码为 [`7f8a5024f20759c262fcd990e05e48a8bf0e6ebd`](https://github.com/553421138/rustdesk-nas-client/tree/7f8a5024f20759c262fcd990e05e48a8bf0e6ebd)，最低 macOS 12.3。DMG 完整性、ARM64 核心及独立应用标识已核验；[实际 ARM 安装包启动检查](https://github.com/553421138/rustdesk-nas-client/actions/runs/42563946712)确认启动程序和核心均为原生 ARM 架构，全新配置下的服务器、公钥和点击确认模式正确，保存密码模式也无法替换点击确认。
+
 真实设备上的画面、键盘鼠标、系统权限和逐次点击接受仍需实际试连。
 
-顾客工作流在 Windows 和 macOS 上运行 `nas_customer_tests`，验证各类主动连接被拒绝，以及保存的密码模式无法替换点击确认。本次两平台的该步骤均已通过；重新构建时以新的 Actions 结果为准。
+顾客工作流在 Windows 和 macOS 上运行 `nas_customer_tests`，验证各类主动连接被拒绝，以及保存的密码模式无法替换点击确认。本次 Windows、Intel Mac 和 Apple 芯片 Mac 的该步骤均已通过；重新构建时以新的 Actions 结果为准。
 
 ## 代码改动范围
 
@@ -72,6 +74,8 @@ Windows 顾客版的 EXE 和 MSI 已核验内置配置、主动连接限制标�
 - `src/server/connection.rs`：顾客版忽略切换控制方向请求，关闭锁屏密码免确认例外，保证每次由顾客接受；完整端继续执行原有逻辑。
 - `flutter/android/app/build.gradle`：仅更换 Android applicationId，让个人签名应用可与官方应用并存；原有 JNI/Flutter 接口不变。
 
-其余修改为构建工作流、说明、版本清单和两项顾客行为回归测试；未加入其他功能或整理既有实现。未设置顾客编译变量时，顾客专用分支不生效。
+已有构建辅助文件的必要改动也已逐项核对：`.github/workflows/bridge.yml` 只保留本次各平台使用的 Flutter 桥接生成任务；`.github/workflows/third-party-RustDeskTempTopMostWindow.yml` 去掉必填输入的默认值，由调用方明确提供 Windows 构建参数。两者限制任务时长和产物保留期，减少公共构建资源占用；保留上游排版以缩小对照差异，恢复排版前后的解析结果相同。
+
+其余修改为新增的构建和安装包检查工作流、说明、版本清单和两项顾客行为回归测试；未加入其他功能或整理既有实现。Apple 芯片顾客版复用上述运行路径，只增加 ARM 构建流程和 Mac 安装包检查的架构选择。未设置顾客编译变量时，顾客专用分支不生效。
 
 `personal-build.json` 记录内置的公开网络配置和源码摘要。本源码目录不包含服务器私钥、远程控制密码或 API 凭据。
