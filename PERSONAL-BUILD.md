@@ -18,6 +18,7 @@
 - 顾客版隐藏主动连接面板，底层拒绝向 ID、IP、域名发起远控、文件传输、隧道等连接。
 - 会话中的“切换控制方向”也被拒绝；锁屏密码登录不绕过顾客确认。
 - “点击接受”模式随程序编译并锁定，已有配置中的密码模式不会替换它。
+- 应用名为 `RustDeskCustomer`，使用独立配置和进程通信名称，避免唤起已经运行的普通版；Windows 免安装包也使用独立解压目录，Mac 使用独立应用标识。
 
 在 Actions 中手动启动 **Build customer incoming-only RustDesk clients**。其工作流为 `.github/workflows/customer-build.yml`，编译时设置 `RUSTDESK_NAS_EDITION=customer`；完整端不设置这个变量。顾客版产物名称包含 `Customer`，文件名包含 `customer`，分发时应保留这个标记。仅被控限制适用于该顾客版程序。
 

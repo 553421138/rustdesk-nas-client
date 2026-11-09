@@ -13,7 +13,7 @@
     "enable-check-update": "N"
   },
   "android_application_id": "cn.hkbeautyshop.rustdesk",
-  "configuration_source_sha256": "408a78aad979d4c921a1b3f530c2cc613075900794daae0a8b9831a778179a82",
+  "configuration_source_sha256": "82cf082f583adced8de7972228129d93500a96df2eb13c549b156cd3f64a063d",
   "status": "operator compilation running; customer source prepared; device verification pending",
   "editions": {
     "operator": {
@@ -36,7 +36,9 @@
         "RUSTDESK_NAS_EDITION": "customer"
       },
       "connection_mode": "incoming only; outgoing connections and switch sides disabled",
-      "approval": "click required for each connection; locked"
+      "approval": "click required for each connection; locked",
+      "application_name": "RustDeskCustomer",
+      "macos_bundle_id": "cn.hkbeautyshop.rustdesk.customer"
     }
   }
 }
