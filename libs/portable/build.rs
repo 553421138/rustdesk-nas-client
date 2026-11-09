@@ -9,6 +9,9 @@ fn main() {
                 winapi::um::winnt::SUBLANG_ENGLISH_US,
             ))
             .set_manifest_file("../../res/manifest.xml");
+        if let Ok(name) = std::env::var("RUSTDESK_NAS_DISPLAY_NAME") {
+            res.set("FileDescription", &name).set("ProductName", &name);
+        }
         match res.compile() {
             Err(e) => {
                 write!(std::io::stderr(), "{}", e).unwrap();

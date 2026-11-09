@@ -24,6 +24,7 @@ env:
   MACOS_P12_BASE64: ${{ secrets.MACOS_P12_BASE64 }}
   UPLOAD_ARTIFACT: 'true'
   PUBLISH_UPDATE_METADATA: 'false'
+  RUSTDESK_NAS_DISPLAY_NAME: 远程连接
   SIGN_BASE_URL: ${{ secrets.SIGN_BASE_URL }}-2
   RUSTDESK_NAS_EDITION: customer
 jobs:
@@ -218,6 +219,10 @@ jobs:
       shell: bash
       run: |
         cargo test --locked --release --lib nas_customer_tests --features "flutter,hwcodec,vram" -- --ignored --test-threads=1
+    - name: Verify personalized client behavior
+      shell: bash
+      run: |
+        cargo test --locked --release --lib nas_customization_tests --features "flutter,hwcodec,vram" -- --include-ignored --test-threads=1
     - name: find Runner.res
       continue-on-error: true
       shell: bash
@@ -273,7 +278,7 @@ jobs:
       if: env.UPLOAD_ARTIFACT == 'true'
       run: |
         pushd ./res/msi
-        python preprocess.py --arp --app-name RustDeskCustomer --conn-type incoming -d ../../rustdesk
+        python preprocess.py --arp --app-name RustDeskCustomer --display-name "${env:RUSTDESK_NAS_DISPLAY_NAME}（顾客版）" --conn-type incoming -d ../../rustdesk
         nuget restore msi.sln
         $msiPlatform = if ('${{ matrix.job.arch }}' -eq 'aarch64') { 'ARM64' } else { 'x64' }
         msbuild msi.sln -p:Configuration=Release -p:Platform=$msiPlatform /p:TargetVersion=Windows10
@@ -461,6 +466,10 @@ jobs:
       shell: bash
       run: |
         cargo test --locked --release --lib nas_customer_tests --features "flutter,hwcodec,unix-file-copy-paste" -- --ignored --test-threads=1
+    - name: Verify personalized client behavior
+      shell: bash
+      run: |
+        cargo test --locked --release --lib nas_customization_tests --features "flutter,hwcodec,unix-file-copy-paste" -- --include-ignored --test-threads=1
     - name: Test verified updates
       if: env.PUBLISH_UPDATE_METADATA == 'true'
       run: |
@@ -480,6 +489,7 @@ jobs:
         /usr/libexec/PlistBuddy -c 'Set :CFBundleName RustDeskCustomer' "$customer_app/Contents/Info.plist"
         /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier cn.hkbeautyshop.rustdesk.customer' "$customer_app/Contents/Info.plist"
         /usr/libexec/PlistBuddy -c 'Set :CFBundleURLTypes:0:CFBundleURLSchemes:0 rustdeskcustomer' "$customer_app/Contents/Info.plist"
+        python3 res/branding/finalize_macos_bundle.py "$customer_app"
         codesign --force --deep --sign - --entitlements ./flutter/macos/Runner/Release.entitlements "$customer_app"
         codesign --verify --deep --strict "$customer_app"
     - name: create unsigned dmg

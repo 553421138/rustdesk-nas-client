@@ -22,6 +22,16 @@ name: Check built Mac package
         - x86_64
         - aarch64
         default: x86_64
+      display-name:
+        description: Expected localized name (empty for older packages)
+        required: false
+        type: string
+        default: ''
+      icon-sha256:
+        description: Expected AppIcon.icns digest (empty for older packages)
+        required: false
+        type: string
+        default: ''
 permissions:
   contents: read
   actions: read
@@ -33,6 +43,8 @@ jobs:
       VERIFY_EDITION: ${{ inputs.edition }}
       VERIFY_RUN_ID: ${{ inputs.run-id }}
       VERIFY_ARCH: ${{ inputs.architecture }}
+      VERIFY_DISPLAY_NAME: ${{ inputs.display-name }}
+      VERIFY_ICON_SHA256: ${{ inputs.icon-sha256 }}
     steps:
     - name: Download built DMG
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -69,6 +81,25 @@ jobs:
         test "$(uname -m)" = "$native_arch"
         lipo "$binary" -verify_arch "$native_arch"
         lipo "/Applications/$app_name.app/Contents/Frameworks/liblibrustdesk.dylib" -verify_arch "$native_arch"
+        branding_verified=false
+        if [ -n "$VERIFY_DISPLAY_NAME" ]; then
+          swift - "/Applications/$app_name.app" "$VERIFY_DISPLAY_NAME" <<'SWIFT'
+        import Foundation
+        let path = CommandLine.arguments[1]
+        let expected = CommandLine.arguments[2]
+        guard let bundle = Bundle(path: path),
+              let name = bundle.localizedInfoDictionary?["CFBundleDisplayName"] as? String,
+              name == expected else { fatalError("Unexpected localized bundle name") }
+        let finderName = FileManager.default.displayName(atPath: path)
+        precondition(finderName == expected || finderName == expected + ".app", finderName)
+        print("Localized application name: " + name)
+        SWIFT
+          codesign --verify --deep --strict "/Applications/$app_name.app"
+          [[ "$VERIFY_ICON_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          actual_icon_sha256=$(shasum -a 256 "/Applications/$app_name.app/Contents/Resources/AppIcon.icns" | awk '{print $1}')
+          test "$actual_icon_sha256" = "$VERIFY_ICON_SHA256"
+          branding_verified=true
+        fi
         run_client() { sudo env HOME="$qa_home" XDG_CONFIG_HOME="$qa_home/.config" "$binary" "$@"; }
         test "$(run_client --version)" = 1.5.1
         check_option() {
@@ -88,7 +119,7 @@ jobs:
           check_option approve-mode click
           click_verified=true
         fi
-        printf '{"edition":"%s","run_id":"%s","architecture":"%s","startup_verified":true,"fresh_profile_network_verified":true,"click_approval_verified":%s}\n' "$VERIFY_EDITION" "$VERIFY_RUN_ID" "$VERIFY_ARCH" "$click_verified" > macos-package-check.json
+        printf '{"edition":"%s","run_id":"%s","architecture":"%s","startup_verified":true,"fresh_profile_network_verified":true,"click_approval_verified":%s,"branding_verified":%s}\n' "$VERIFY_EDITION" "$VERIFY_RUN_ID" "$VERIFY_ARCH" "$click_verified" "$branding_verified" > macos-package-check.json
         cat macos-package-check.json
     - name: Save package startup verification
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

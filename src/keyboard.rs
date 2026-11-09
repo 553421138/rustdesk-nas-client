@@ -81,6 +81,8 @@ lazy_static::lazy_static! {
 }
 
 pub mod shortcuts;
+#[cfg(any(target_os = "macos", test))]
+pub(crate) mod macos_spaces;
 
 pub mod client {
     use super::*;
@@ -371,6 +373,10 @@ pub mod client {
         session: &Session<T>,
         session_id: SessionID,
     ) {
+        #[cfg(target_os = "macos")]
+        if super::macos_spaces::keep_local(event) {
+            return;
+        }
         // Shortcut intercept — see the long comment in `process_event` above
         // for the consume / feature-gate rationale. The only difference
         // here is that the Flutter FFI path threads an explicit SessionID
@@ -673,6 +679,11 @@ fn start_grab_loop() {
                 return Some(event);
             }
 
+            #[cfg(target_os = "macos")]
+            if macos_spaces::keep_local(&event) {
+                return Some(event);
+            }
+
             let _scan_code = event.position_code;
             let _code = event.platform_code as KeyCode;
 
@@ -683,6 +694,13 @@ fn start_grab_loop() {
 
             let res = if KEYBOARD_HOOKED.load(Ordering::SeqCst) {
                 client::process_event(&get_keyboard_mode(), &event, None);
+                #[cfg(target_os = "macos")]
+                if option_env!("RUSTDESK_NAS_DISPLAY_NAME").is_some()
+                    && matches!(key, Key::ControlLeft | Key::ControlRight)
+                {
+                    // Spaces must see the local Control modifier as well as its arrow.
+                    return Some(event);
+                }
                 if is_press {
                     None
                 } else {

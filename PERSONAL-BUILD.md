@@ -79,3 +79,79 @@ Apple 芯片 Mac 顾客版也已完成[原生 ARM 编译、两项限制测试与
 其余修改为新增的构建和安装包检查工作流、说明、版本清单和两项顾客行为回归测试；未加入其他功能或整理既有实现。Apple 芯片顾客版复用上述运行路径，只增加 ARM 构建流程和 Mac 安装包检查的架构选择。未设置顾客编译变量时，顾客专用分支不生效。
 
 `personal-build.json` 记录内置的公开网络配置和源码摘要。本源码目录不包含服务器私钥、远程控制密码或 API 凭据。
+
+## 远程连接定制更新
+
+三个工作流均设置 `RUSTDESK_NAS_DISPLAY_NAME=远程连接`。完整端显示为“远程连接”，顾客版显示为“远程连接（顾客版）”。该定制构建关闭账号和在线地址簿入口，最近连接、收藏、局域网发现继续使用。内部 RustDesk / RustDeskCustomer 名称、配置路径、URI 和应用标识用于延续已有安装。
+
+Mac 控制端保留本机 Control + ←/→ 给系统切换 Spaces，左右箭头不发送到远端。Control 本身仍可用于远端复制等组合键。仅该定制 Mac 构建启用此处理，不改动其他平台的键盘路径或模拟松键路径。Mac 需启用 Mission Control 的“向左/向右移动一个空间”快捷键并创建多个桌面；真实键盘和屏幕操作需实机试连验证。
+
+正式图标采用双窗口连接、墨蓝与暖白的矢量设计，源文件、概念图和导出说明见 `res/branding/README.md`。图标里不含文字。Mac 通过本地化名称保留稳定的应用包路径，资源修改后重新签名。
+
+本次现有文件及运行路径的必要改动（新逻辑放在独立模块）：
+
+- `.github/workflows/check-macos-package.yml`：传入定制名称、运行对应原生回归测试、在打包前写入系统显示名称；Mac 检查工作流增加可选的真实包名称、图标和签名核验，旧包检查保留。
+- `.github/workflows/customer-apple-silicon.yml`：传入定制名称、运行对应原生回归测试、在打包前写入系统显示名称；Mac 检查工作流增加可选的真实包名称、图标和签名核验，旧包检查保留。
+- `.github/workflows/customer-build.yml`：传入定制名称、运行对应原生回归测试、在打包前写入系统显示名称；Mac 检查工作流增加可选的真实包名称、图标和签名核验，旧包检查保留。
+- `.github/workflows/personal-build.yml`：传入定制名称、运行对应原生回归测试、在打包前写入系统显示名称；Mac 检查工作流增加可选的真实包名称、图标和签名核验，旧包检查保留。
+- `appimage/AppImageBuilder-x86_64.yml`：AppImage 桌面入口显示新名称，可执行路径保留。
+- `flutter/android/app/src/main/AndroidManifest.xml`：Android 启动器、输入服务显示中文名称。
+- `flutter/android/app/src/main/res/mipmap-hdpi/ic_launcher.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-hdpi/ic_stat_logo.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-mdpi/ic_launcher.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-mdpi/ic_stat_logo.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xhdpi/ic_stat_logo.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xxhdpi/ic_stat_logo.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/mipmap-xxxhdpi/ic_stat_logo.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/android/app/src/main/res/values/ic_launcher_background.xml`：Android 自适应图标使用墨蓝底色。
+- `flutter/android/app/src/main/res/values/strings.xml`：Android 系统应用名称使用新品牌。
+- `flutter/lib/common.dart`：只修改窗口标题 getter，打印机筛选仍使用原内部身份。
+- `flutter/lib/desktop/pages/desktop_home_page.dart`：更新提示使用新显示接口。
+- `flutter/lib/main.dart`：主应用标题使用新显示接口。
+- `flutter/lib/mobile/pages/home_page.dart`：移动主页名称使用新显示接口。
+- `flutter/lib/web/bridge.dart`：为新增显示接口手写 Web 包装，Web 保留原有名称。
+- `flutter/macos/Runner/AppIcon.icns`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `flutter/windows/runner/Runner.rc`：Windows 产品属性显示中文名称。
+- `flutter/windows/runner/resources/app_icon.ico`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `libs/hbb_common/src/config.rs`：在共享账号、地址簿开关处固定关闭定制构建的账号功能。
+- `libs/portable/build.rs`：Windows 便携启动器文件属性显示新名称。
+- `personal-build.json`：记录定制参数与配置源码摘要，保留前一批包的构建记录。
+- `res/128x128.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/128x128@2x.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/32x32.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/64x64.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/icon.ico`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/icon.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/mac-icon.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/mac-tray-dark-x2.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/msi/Package/Components/Folders.wxs`：开始菜单使用显示名，安装和配置目录保留内部身份。
+- `res/msi/Package/Components/RustDesk.wxs`：托盘快捷方式清理匹配显示名，打印机参数保留内部名，防止改名破坏设备识别。
+- `res/msi/Package/Package.wxs`：安装程序产品名使用显示名称。
+- `res/msi/preprocess.py`：独立显示名称和中文代码页，保留内部产品名和升级标识。
+- `res/rustdesk-link.desktop`：Linux URI 桌面入口显示新名称。
+- `res/rustdesk.desktop`：Linux 桌面入口显示新名称。
+- `res/scalable.svg`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `res/tray-icon.ico`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。
+- `src/flutter.rs`：原生 Windows 窗口标题和同版本窗口查找使用可见名称。
+- `src/flutter_ffi.rs`：增加只用于显示名称的接口，原内部身份接口保留。
+- `src/keyboard.rs`：Mac 抓键和 Flutter 键盘入口添加 Spaces 过滤，向本机保留 Control 事件。
+- `src/lang.rs`：定制构建的提示使用新名称，保留上游署名例外。
+- `src/lib.rs`：注册独立的定制显示模块。
+- `src/tray.rs`：托盘提示显示新名称，内部托盘标识保留。
+
+新增三项回归测试：显示名称与内部身份/账号开关，以及两项快捷键路由和松键配对行为。此前两项顾客连接限制测试保留，并继续在 Windows、Intel Mac 和 ARM Mac 原生运行。未在本机生成桥接代码，新增 FFI 的原生绑定由现有 CI 生成，Web 包装已手写补全。未设置定制编译变量时，运行时代码仍走原有路径；静态名称和图标资源属于该源码分支的品牌替换。
+
+本说明文件 `PERSONAL-BUILD.md` 本身仅补充本次功能、验证与必要改动范围。

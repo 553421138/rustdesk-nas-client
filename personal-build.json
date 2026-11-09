@@ -13,7 +13,7 @@
     "enable-check-update": "N"
   },
   "android_application_id": "cn.hkbeautyshop.rustdesk",
-  "configuration_source_sha256": "82cf082f583adced8de7972228129d93500a96df2eb13c549b156cd3f64a063d",
+  "configuration_source_sha256": "3bccfa3de76819035ad1d65f5fcfaaba393ae2d25751164474bdc8aa4a5fc900",
   "status": "all requested operator and customer platforms built and checked; interactive device verification pending",
   "editions": {
     "operator": {
@@ -71,5 +71,17 @@
     "application_permissions": "original defaults; keyboard, clipboard, file transfer and audio enabled by default and adjustable",
     "system_permissions": "require device user authorization; not pre-granted",
     "customer_connection_approval": "click required for each connection"
+  },
+  "customization": {
+    "display_name": "远程连接",
+    "customer_display_name": "远程连接（顾客版）",
+    "compile_environment": {
+      "RUSTDESK_NAS_DISPLAY_NAME": "远程连接"
+    },
+    "account_and_address_book": "disabled at compile time",
+    "macos_control_left_right": "local Spaces; arrows are not sent to the peer",
+    "internal_identity": "unchanged for upgrade and configuration compatibility",
+    "application_icon": "res/branding/app-icon.svg",
+    "status": "rebuild pending; previous build records above refer to the preceding packages"
   }
 }

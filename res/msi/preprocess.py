@@ -84,6 +84,9 @@ def make_parser():
         "--app-name", type=str, default="RustDesk", help="The app name."
     )
     parser.add_argument(
+        "--display-name", type=str, default="", help="Display name; keeps the app identity unchanged."
+    )
+    parser.add_argument(
         "-v", "--version", type=str, default="", help="The app version."
     )
     parser.add_argument(
@@ -250,7 +253,8 @@ def gen_pre_vars(args, dist_dir):
             f'{indent}<?define Version="{g_version}" ?>\n',
             f'{indent}<?define Manufacturer="{args.manufacturer}" ?>\n',
             f'{indent}<?define Product="{args.app_name}" ?>\n',
-            f'{indent}<?define Description="{args.app_name} Installer" ?>\n',
+            f'{indent}<?define ProductDisplayName={quoteattr(args.display_name or args.app_name)} ?>\n',
+            f'{indent}<?define Description={quoteattr((args.display_name or args.app_name) + " Installer")} ?>\n',
             f'{indent}<?define ProductLower="{args.app_name.lower()}" ?>\n',
             f'{indent}<?define RegKeyRoot=".$(var.ProductLower)" ?>\n',
             f'{indent}<?define RegKeyInstall="$(var.RegKeyRoot)\\Install" ?>\n',
@@ -568,4 +572,8 @@ if __name__ == "__main__":
     if not gen_custom_dialog_bitmaps():
         sys.exit(-1)
 
-    replace_app_name_in_langs(args.app_name)
+    replace_app_name_in_langs(args.display_name or args.app_name)
+    if args.display_name:
+        language_file = Path(sys.argv[0]).parent / "Package/Language/Package.en-us.wxl"
+        content = language_file.read_text(encoding="utf-8")
+        language_file.write_text(content.replace('"1252"', '"936"'), encoding="utf-8")

@@ -11,6 +11,7 @@ env:
   VERSION: 1.5.1
   UPLOAD_ARTIFACT: 'true'
   PUBLISH_UPDATE_METADATA: 'false'
+  RUSTDESK_NAS_DISPLAY_NAME: 远程连接
   RUSTDESK_NAS_EDITION: customer
 jobs:
   generate-bridge:
@@ -146,6 +147,7 @@ jobs:
         set -euo pipefail
         FEATURES=$(./build.py --flutter --hwcodec --unix-file-copy-paste --screencapturekit --print-features)
         cargo test --locked --release --lib nas_customer_tests --features "$FEATURES" -- --ignored --test-threads=1
+        cargo test --locked --release --lib nas_customization_tests --features "$FEATURES" -- --include-ignored --test-threads=1
     - name: Use independent customer Mac application identity
       shell: bash
       run: |
@@ -158,6 +160,7 @@ jobs:
         /usr/libexec/PlistBuddy -c 'Set :CFBundleName RustDeskCustomer' "$customer_app/Contents/Info.plist"
         /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier cn.hkbeautyshop.rustdesk.customer' "$customer_app/Contents/Info.plist"
         /usr/libexec/PlistBuddy -c 'Set :CFBundleURLTypes:0:CFBundleURLSchemes:0 rustdeskcustomer' "$customer_app/Contents/Info.plist"
+        python3 res/branding/finalize_macos_bundle.py "$customer_app"
         codesign --force --deep --sign - --entitlements ./flutter/macos/Runner/Release.entitlements "$customer_app"
         codesign --verify --deep --strict "$customer_app"
     - name: create unsigned dmg

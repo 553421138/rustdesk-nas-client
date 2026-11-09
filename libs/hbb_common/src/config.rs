@@ -2930,11 +2930,17 @@ pub fn is_disable_settings() -> bool {
 
 #[inline]
 pub fn is_disable_ab() -> bool {
+    if option_env!("RUSTDESK_NAS_DISPLAY_NAME").is_some() {
+        return true;
+    }
     is_some_hard_opton("disable-ab")
 }
 
 #[inline]
 pub fn is_disable_account() -> bool {
+    if option_env!("RUSTDESK_NAS_DISPLAY_NAME").is_some() {
+        return true;
+    }
     is_some_hard_opton("disable-account")
 }
 
