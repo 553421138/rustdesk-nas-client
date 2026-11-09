@@ -67,8 +67,8 @@ jobs:
           *) exit 1 ;;
         esac
         test "$(uname -m)" = "$native_arch"
-        lipo -verify_arch "$native_arch" "$binary"
-        lipo -verify_arch "$native_arch" "/Applications/$app_name.app/Contents/Frameworks/liblibrustdesk.dylib"
+        lipo "$binary" -verify_arch "$native_arch"
+        lipo "/Applications/$app_name.app/Contents/Frameworks/liblibrustdesk.dylib" -verify_arch "$native_arch"
         run_client() { sudo env HOME="$qa_home" XDG_CONFIG_HOME="$qa_home/.config" "$binary" "$@"; }
         test "$(run_client --version)" = 1.5.1
         check_option() {
