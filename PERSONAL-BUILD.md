@@ -165,3 +165,5 @@ Mac 安装包检查在可选品牌核验中读取实际 dylib 的公共同步接
 AppImage 配方同时保留中文桌面显示名和固定的构建文件名，防止改名改变产物匹配路径。新增 `.github/workflows/package-appimage.yml` 可使用已完成构建的 DEB 单独打包并记录对应运行号，无需重复编译其他平台；使用相同的 AppRun 源码和打包命令。
 
 Mac 的托盘图标读取路径跳过通用彩色 PNG，使用已编译的单色模板，防止新 PNG 覆盖模板后显示成实心方块。该改动仅针对定制 Mac 分支；Windows、Linux 和原版构建路径不变。完整端与顾客版构建工作流增加可选 `mac-only` 输入，默认仍构建全部平台，用于只重编 Intel Mac；ARM 顾客版继续使用独立工作流。
+
+Android 包装重试：`flutter/android/build.gradle` 在保留现有仓库的同时优先加入 Maven Central，避免 Kotlin 编译依赖绕到 JCenter 失效链接而收到 504。新增 `.github/workflows/package-android.yml` 可从同一次源构建的 bridge 和三个已编译 Android 库重新生成并签名通用 APK；不重新编译 Rust 库。此调整只改变依赖下载及包装流程。
