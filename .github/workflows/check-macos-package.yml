@@ -1,0 +1,82 @@
+name: Check built Intel Mac package
+'on':
+  workflow_dispatch:
+    inputs:
+      edition:
+        description: Client edition
+        required: true
+        type: choice
+        options:
+        - operator
+        - customer
+        default: operator
+      run-id:
+        description: Build run containing the DMG artifact
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  check-package:
+    runs-on: macos-15-intel
+    timeout-minutes: 15
+    env:
+      VERIFY_EDITION: ${{ inputs.edition }}
+      VERIFY_RUN_ID: ${{ inputs.run-id }}
+    steps:
+    - name: Download built DMG
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      with:
+        name: ${{ inputs.edition == 'customer' && 'RustDesk-NAS-Customer-1.5.1-macOS-x86_64' || 'RustDesk-NAS-1.5.1-macOS-x86_64'
+          }}
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ github.token }}
+        path: packages
+    - name: Launch packaged app with a fresh profile and read effective settings
+      shell: bash
+      run: |
+        set -euo pipefail
+        case "$VERIFY_EDITION" in
+          operator) app_name=RustDesk ;;
+          customer) app_name=RustDeskCustomer ;;
+          *) exit 1 ;;
+        esac
+        [[ "$VERIFY_RUN_ID" =~ ^[0-9]+$ ]]
+        packages=(packages/*.dmg)
+        test "${#packages[@]}" -eq 1
+        mount_point=$(mktemp -d)
+        trap 'hdiutil detach "$mount_point" -force >/dev/null 2>&1 || true' EXIT
+        hdiutil attach "${packages[0]}" -readonly -nobrowse -mountpoint "$mount_point" -quiet
+        sudo ditto "$mount_point/$app_name.app" "/Applications/$app_name.app"
+        qa_home=$(mktemp -d)/clean-home
+        mkdir -p "$qa_home"
+        binary="/Applications/$app_name.app/Contents/MacOS/$app_name"
+        run_client() { sudo env HOME="$qa_home" XDG_CONFIG_HOME="$qa_home/.config" "$binary" "$@"; }
+        test "$(run_client --version)" = 1.5.1
+        check_option() {
+          actual=$(run_client --option "$1")
+          if [ "$actual" != "$2" ]; then
+            echo "::error::Unexpected $1: $actual"
+            exit 1
+          fi
+        }
+        check_option custom-rendezvous-server nas.hk-beautyshop.cn:21116
+        check_option relay-server nas.hk-beautyshop.cn:21117
+        check_option key GevVI6bnGZ79VB8CAJ9InRZ3o566YJDQZW5mTOCGri4=
+        click_verified=false
+        if [ "$VERIFY_EDITION" = customer ]; then
+          check_option approve-mode click
+          run_client --option approve-mode password
+          check_option approve-mode click
+          click_verified=true
+        fi
+        printf '{"edition":"%s","run_id":"%s","startup_verified":true,"fresh_profile_network_verified":true,"click_approval_verified":%s}\n' "$VERIFY_EDITION" "$VERIFY_RUN_ID" "$click_verified" > macos-package-check.json
+        cat macos-package-check.json
+    - name: Save package startup verification
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: macOS-${{ inputs.edition }}-startup-verification
+        path: macos-package-check.json
+        if-no-files-found: error
+        retention-days: 7
