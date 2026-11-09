@@ -1,0 +1,378 @@
+{
+  "client_version": "1.5.1",
+  "display_name": "远程连接",
+  "customer_display_name": "远程连接（顾客版）",
+  "verified_at_utc": "2026-11-09T09:34:25.768328+00:00",
+  "packages": [
+    {
+      "edition": "operator",
+      "platform": "Windows",
+      "file": "RemoteConnect-Full-1.5.1-Windows-x64.zip",
+      "bytes": 52838463,
+      "sha256": "c151f9c87c94d96f4d3e62336d46e1bf245eac027e0e51562ec91237bdac2601",
+      "source_commit": "2a7fb220834e45e0e68c51e83685a562e9cb61ec",
+      "build_run": "42583324215",
+      "contents_sha256": [
+        "f416b45f2ac197a85098243dcb01bfa38a91dc9f8230cbc502495df2b85e0b72  RemoteConnect-Full-1.5.1-Windows-x64.exe",
+        "7369b38a7d58839672eb52b616c67a6d8555f4a6278d6799d90ca5b767552772  RemoteConnect-Full-1.5.1-Windows-x64.msi"
+      ]
+    },
+    {
+      "edition": "operator",
+      "platform": "Intel Mac",
+      "file": "RemoteConnect-Full-1.5.1-macOS-Intel.zip",
+      "bytes": 37628537,
+      "sha256": "31bff62d5407343223f35f1fd515e2281686a13f55cbf02ee99f2e24feeb2be9",
+      "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+      "build_run": "42579669169",
+      "contents_sha256": [
+        "3144cb85c9feffd2ec52da8dba0684037837d82dcdd8e7eb7fdb8b242fba4507  RemoteConnect-Full-1.5.1-macOS-Intel.dmg"
+      ]
+    },
+    {
+      "edition": "customer",
+      "platform": "Windows",
+      "file": "RemoteConnect-Customer-1.5.1-Windows-x64.zip",
+      "bytes": 52859884,
+      "sha256": "7fc91d54d78fdcf7d50d36b452cc52450070ae266316bc328312551da9038b32",
+      "source_commit": "e273d629c5ef4293a55a8bedd6fb10e09bdcba38",
+      "build_run": "42584685346",
+      "contents_sha256": [
+        "ee67a8535abe5fdd9dc0fe5416a740d9974f5aded3679cc877d044b50e418ce6  RemoteConnect-Customer-1.5.1-Windows-x64.exe",
+        "01d194632b67e2fc470d4b6009f01ce54a2ff16c6e411041f008f1151dcc88ae  RemoteConnect-Customer-1.5.1-Windows-x64.msi"
+      ]
+    },
+    {
+      "edition": "customer",
+      "platform": "Intel Mac",
+      "file": "RemoteConnect-Customer-1.5.1-macOS-Intel.zip",
+      "bytes": 37634507,
+      "sha256": "227932aa488379b118f7c5ba545662f01a38daa1ddb48aedc151c84cc0a84692",
+      "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+      "build_run": "42579672367",
+      "contents_sha256": [
+        "67bbf9d0aa3401fd90ff35e16cf1a9ac38a203e3484409a71400a560937b52ff  RemoteConnect-Customer-1.5.1-macOS-Intel.dmg"
+      ]
+    },
+    {
+      "edition": "customer",
+      "platform": "Apple Silicon Mac",
+      "file": "RemoteConnect-Customer-1.5.1-macOS-AppleSilicon.zip",
+      "bytes": 30673179,
+      "sha256": "3a7ab1637ca8c157720780086c84afcdd2699bf874cf2a616c59de383e7570d3",
+      "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+      "build_run": "42579676006",
+      "contents_sha256": [
+        "d18bc912dc70317438b6279336284149d6746aa0ca4ca861192fc3080b553549  RemoteConnect-Customer-1.5.1-macOS-AppleSilicon.dmg"
+      ]
+    },
+    {
+      "edition": "operator",
+      "platform": "Android",
+      "file": "RemoteConnect-Full-1.5.1-Android-universal.apk",
+      "bytes": 78898011,
+      "sha256": "49d538a8ab2bd9ecdfbf0311931aa98147837b67cd514e2f30cd525c3e427ca2",
+      "native_source_commit": "ab4e38ad864d6c5a0b9e37e393ccf5752d29c208",
+      "native_build_run": 42576659128,
+      "packaging_source_commit": "9ff4b7645010593fc2b7d13515631acd76216815",
+      "packaging_run": 42581751492
+    },
+    {
+      "edition": "operator",
+      "platform": "Linux DEB",
+      "file": "RemoteConnect-Full-1.5.1-Linux-x64.deb",
+      "bytes": 25371324,
+      "sha256": "faf0a79c2e81236eef9f76165bcf7e95bb653a723f41026fd2e997c7b76d55cf",
+      "native_source_commit": "ab4e38ad864d6c5a0b9e37e393ccf5752d29c208",
+      "native_build_run": 42576659128
+    },
+    {
+      "edition": "operator",
+      "platform": "Linux AppImage",
+      "file": "RemoteConnect-Full-1.5.1-Linux-x64.AppImage",
+      "bytes": 88545784,
+      "sha256": "c876c70507e5e15ca5e93cd883615f9b5212d47766da9e12b1bfd43364937a33",
+      "native_source_commit": "ab4e38ad864d6c5a0b9e37e393ccf5752d29c208",
+      "native_build_run": 42576659128,
+      "packaging_source_commit": "9ff4b7645010593fc2b7d13515631acd76216815",
+      "packaging_run": 42581753354
+    }
+  ],
+  "native_regression_tests": [
+    {
+      "platform": "windows-operator",
+      "build_run": 42583324215,
+      "job_id": 129047998762,
+      "source_commit": "2a7fb220834e45e0e68c51e83685a562e9cb61ec",
+      "branding_and_local_key_routing_tests_passed": 3,
+      "customer_restriction_tests_passed": 0,
+      "log_file": "windows-operator-success.log",
+      "test_output": [
+        "2026-11-09T08:58:44.3741192Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 234 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "platform": "windows-customer",
+      "build_run": 42584685346,
+      "job_id": 129052732539,
+      "source_commit": "e273d629c5ef4293a55a8bedd6fb10e09bdcba38",
+      "branding_and_local_key_routing_tests_passed": 3,
+      "customer_restriction_tests_passed": 2,
+      "log_file": "windows-customer-success.log",
+      "test_output": [
+        "2026-11-09T08:59:57.2791819Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 235 filtered out; finished in 0.00s",
+        "2026-11-09T08:59:58.0982134Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 234 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "platform": "mac-intel-operator",
+      "build_run": 42579669169,
+      "job_id": 129036015440,
+      "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+      "branding_and_local_key_routing_tests_passed": 3,
+      "customer_restriction_tests_passed": 0,
+      "log_file": "mac-intel-operator-success.log",
+      "test_output": [
+        "2026-11-09T09:26:16.7362250Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 242 filtered out; finished in 0.01s"
+      ]
+    },
+    {
+      "platform": "mac-intel-customer",
+      "build_run": 42579672367,
+      "job_id": 129035999497,
+      "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+      "branding_and_local_key_routing_tests_passed": 3,
+      "customer_restriction_tests_passed": 2,
+      "log_file": "mac-intel-customer-success.log",
+      "test_output": [
+        "2026-11-09T08:45:13.8799450Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 243 filtered out; finished in 0.03s",
+        "2026-11-09T08:45:21.9963760Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 242 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "platform": "mac-arm-customer",
+      "build_run": 42579676006,
+      "job_id": 129038785635,
+      "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+      "branding_and_local_key_routing_tests_passed": 3,
+      "customer_restriction_tests_passed": 2,
+      "log_file": "mac-arm-customer-success.log",
+      "test_output": [
+        "2026-11-09T08:25:20.2869580Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 243 filtered out; finished in 0.02s",
+        "2026-11-09T08:25:24.9163140Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 242 filtered out; finished in 0.00s"
+      ]
+    }
+  ],
+  "package_checks": {
+    "android-verification": {
+      "signature_verified": true,
+      "certificate_sha256": "47690bff4f46d6c74e56e9de5f65f18b6d3a5c49264d064c8bb6771df386f800",
+      "application_id": "cn.hkbeautyshop.rustdesk",
+      "backends": [
+        {
+          "backend": "lib/arm64-v8a/librustdesk.so",
+          "server_and_key_embedded": true,
+          "edition": "operator"
+        },
+        {
+          "backend": "lib/armeabi-v7a/librustdesk.so",
+          "server_and_key_embedded": true,
+          "edition": "operator"
+        },
+        {
+          "backend": "lib/x86_64/librustdesk.so",
+          "server_and_key_embedded": true,
+          "edition": "operator"
+        }
+      ],
+      "file": "rustdesk-1.5.1-universal-signed.apk",
+      "sha256": "49d538a8ab2bd9ecdfbf0311931aa98147837b67cd514e2f30cd525c3e427ca2",
+      "display_name": "远程连接",
+      "launcher_icon_densities_verified": [
+        "mipmap-hdpi",
+        "mipmap-mdpi",
+        "mipmap-xhdpi",
+        "mipmap-xxhdpi",
+        "mipmap-xxxhdpi"
+      ],
+      "native_build_run": 42576659128,
+      "native_source_commit": "ab4e38ad864d6c5a0b9e37e393ccf5752d29c208",
+      "packaging_run": 42581751492,
+      "packaging_source_commit": "9ff4b7645010593fc2b7d13515631acd76216815"
+    },
+    "linux-runtime-verification": {
+      "version": "1.5.1",
+      "fresh_profile_cli_verified": true,
+      "id_server": "nas.hk-beautyshop.cn:21116",
+      "relay_server": "nas.hk-beautyshop.cn:21117",
+      "public_key_matches": true,
+      "configuration_imported": false,
+      "fresh_profile_registration_confirmed": true,
+      "registration_network": "Docker bridge via configured public domain; not an independent external device",
+      "desktop_remote_control_tested": false,
+      "application_name_and_icon_verified": true,
+      "account_and_address_book_disabled": true,
+      "library_getters": {
+        "file": "librustdesk.so",
+        "public_sync_getters_verified": true,
+        "main_get_app_name_sync": "RustDesk",
+        "is_disable_account": true,
+        "is_disable_ab": true,
+        "main_get_app_display_name_sync": "远程连接"
+      }
+    },
+    "appimage-verification": {
+      "file": "rustdesk-1.5.1-x86_64.AppImage",
+      "sha256": "c876c70507e5e15ca5e93cd883615f9b5212d47766da9e12b1bfd43364937a33",
+      "archive_integrity_verified": true,
+      "backend_identical_to_tested_deb": true,
+      "backend_sha256": "40662061951c291d661402ee4edf50ec272cc6954da24ed1759e715ae66c43f4",
+      "display_name_verified": true,
+      "packaging_run": 42581753354,
+      "packaging_source_commit": "9ff4b7645010593fc2b7d13515631acd76216815",
+      "native_build_run": 42576659128,
+      "native_source_commit": "ab4e38ad864d6c5a0b9e37e393ccf5752d29c208"
+    },
+    "mac-customer-arm-verification": {
+      "file": "rustdesk-customer-1.5.1-aarch64.dmg",
+      "bytes": 30635993,
+      "sha256": "d18bc912dc70317438b6279336284149d6746aa0ca4ca861192fc3080b553549",
+      "backend": "rustdesk-customer-1.5.1-aarch64/RustDeskCustomer.app/Contents/Frameworks/liblibrustdesk.dylib",
+      "edition": "customer",
+      "server_and_key_embedded": true,
+      "configuration_verification": "packaged app CLI with a fresh profile",
+      "runtime_report": "macos-package-check.json",
+      "application_name": "RustDeskCustomer",
+      "bundle_id": "cn.hkbeautyshop.rustdesk.customer",
+      "architecture": "aarch64",
+      "minimum_macos": "12.3",
+      "dmg_integrity_verified": true,
+      "packaged_branding_verified": true,
+      "native_tests": {
+        "customer_restrictions_passed": 2,
+        "branding_and_key_routing_passed": 3
+      },
+      "qa_run": 42586172328
+    },
+    "mac-customer-intel-verification": {
+      "file": "rustdesk-customer-1.5.1-x86_64.dmg",
+      "bytes": 37597349,
+      "sha256": "67bbf9d0aa3401fd90ff35e16cf1a9ac38a203e3484409a71400a560937b52ff",
+      "backend": "rustdesk-customer-1.5.1-x86_64/RustDeskCustomer.app/Contents/Frameworks/liblibrustdesk.dylib",
+      "edition": "customer",
+      "server_and_key_embedded": true,
+      "configuration_verification": "packaged app CLI with a fresh profile",
+      "runtime_report": "macos-package-check.json",
+      "application_name": "RustDeskCustomer",
+      "bundle_id": "cn.hkbeautyshop.rustdesk.customer",
+      "architecture": "x86_64",
+      "minimum_macos": "10.14",
+      "dmg_integrity_verified": true,
+      "packaged_branding_verified": true,
+      "qa_run": 42588511307
+    },
+    "mac-operator-intel-verification": {
+      "file": "rustdesk-1.5.1-x86_64.dmg",
+      "bytes": 37591712,
+      "sha256": "3144cb85c9feffd2ec52da8dba0684037837d82dcdd8e7eb7fdb8b242fba4507",
+      "backend": "rustdesk-1.5.1-x86_64/RustDesk.app/Contents/Frameworks/liblibrustdesk.dylib",
+      "edition": "operator",
+      "server_and_key_embedded": true,
+      "configuration_verification": "packaged app CLI with a fresh profile",
+      "runtime_report": "macos-package-check.json",
+      "application_name": "RustDesk",
+      "bundle_id": "com.carriez.rustdesk",
+      "architecture": "x86_64",
+      "minimum_macos": "10.14",
+      "dmg_integrity_verified": true,
+      "packaged_branding_verified": true,
+      "qa_run": 42593707853
+    },
+    "windows-customer-verification": {
+      "file": "rustdesk-customer-1.5.1-x86_64.exe",
+      "bytes": 26123776,
+      "sha256": "ee67a8535abe5fdd9dc0fe5416a740d9974f5aded3679cc877d044b50e418ce6",
+      "backend": ".\\librustdesk.dll",
+      "server_and_key_embedded": true,
+      "edition": "customer"
+    },
+    "windows-customer-msi-verification": {
+      "file": "rustdesk-customer-1.5.1-x86_64.msi",
+      "sha256": "01d194632b67e2fc470d4b6009f01ce54a2ff16c6e411041f008f1151dcc88ae",
+      "product_name": "远程连接（顾客版）",
+      "internal_identity": "RustDeskCustomer",
+      "upgrade_code": "{82491793-AB04-5D48-AD82-AFE0BC48FF0C}",
+      "shortcuts_and_printer_identity_verified": true,
+      "backend": "MSI/librustdesk.dll",
+      "server_and_key_embedded": true,
+      "edition": "customer",
+      "backend_sha256": "fc5cd5e88c3c99d23686a69e1517868fd977c13bcef269d9793577701003a9d1"
+    },
+    "windows-customer-branding-verification": {
+      "portable_executable": "rustdesk-customer-1.5.1-x86_64.exe",
+      "msi": "rustdesk-customer-1.5.1-x86_64.msi",
+      "portable_icon": {
+        "icon_images_matched": 7,
+        "localized_name_present": true
+      },
+      "application_icon": {
+        "icon_images_matched": 7,
+        "localized_name_present": true
+      },
+      "installed_icon": {
+        "icon_images_matched": 7,
+        "localized_name_present": true
+      },
+      "flutter_asset_identical_to_design": true,
+      "portable_and_msi_application_identical": true,
+      "portable_and_msi_backend_identical": true,
+      "backend_sha256": "fc5cd5e88c3c99d23686a69e1517868fd977c13bcef269d9793577701003a9d1"
+    },
+    "windows-operator-verification": {
+      "file": "rustdesk-1.5.1-x86_64.exe",
+      "bytes": 26123776,
+      "sha256": "f416b45f2ac197a85098243dcb01bfa38a91dc9f8230cbc502495df2b85e0b72",
+      "backend": ".\\librustdesk.dll",
+      "server_and_key_embedded": true,
+      "edition": "operator"
+    },
+    "windows-operator-msi-verification": {
+      "file": "rustdesk-1.5.1-x86_64.msi",
+      "sha256": "7369b38a7d58839672eb52b616c67a6d8555f4a6278d6799d90ca5b767552772",
+      "product_name": "远程连接",
+      "internal_identity": "RustDesk",
+      "upgrade_code": "{D3DC41E3-3C37-5D52-BB47-F6673705C01B}",
+      "shortcuts_and_printer_identity_verified": true,
+      "backend": "MSI/librustdesk.dll",
+      "server_and_key_embedded": true,
+      "edition": "operator",
+      "backend_sha256": "6a0b9a4ad62292b00f24998eb1e7d71e475b753c2b82318605efda4fb6950dd0"
+    },
+    "windows-operator-branding-verification": {
+      "portable_executable": "rustdesk-1.5.1-x86_64.exe",
+      "msi": "rustdesk-1.5.1-x86_64.msi",
+      "portable_icon": {
+        "icon_images_matched": 7,
+        "localized_name_present": true
+      },
+      "application_icon": {
+        "icon_images_matched": 7,
+        "localized_name_present": true
+      },
+      "installed_icon": {
+        "icon_images_matched": 7,
+        "localized_name_present": true
+      },
+      "flutter_asset_identical_to_design": true,
+      "portable_and_msi_application_identical": true,
+      "portable_and_msi_backend_identical": true,
+      "backend_sha256": "6a0b9a4ad62292b00f24998eb1e7d71e475b753c2b82318605efda4fb6950dd0"
+    }
+  },
+  "limitations": [
+    "Physical screen, mouse, keyboard and customer accept-dialog interaction require real-device trial.",
+    "Control+Left/Right local Spaces routing has native regression tests; actual Mission Control shortcut behavior requires a Mac trial.",
+    "macOS packages are ad-hoc signed, without Developer ID or notarization.",
+    "Linux registration was tested from Docker through the configured public domain; this is not an independent external device."
+  ]
+}

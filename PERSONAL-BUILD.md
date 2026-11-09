@@ -1,4 +1,4 @@
-# RustDesk NAS 个人内置版
+# 远程连接：RustDesk 自建版
 
 此源码基于官方 RustDesk 1.5.1 和该版本固定的 hbb_common 提交，已在 Rust 公共配置层内置：
 
@@ -47,7 +47,27 @@ Apple 芯片顾客版使用 `.github/workflows/customer-apple-silicon.yml`，在
 
 未配置这些 Secrets 时，上游流程生成调试签名 APK，适合临时测试。正式自用时应保留个人签名密钥的备份，避免更换签名后无法覆盖安装。
 
-## 已完成的构建与验证
+## 本次“远程连接”构建与验证
+
+完整端 Windows x64、Android 通用 APK、Intel Mac、Linux x64 DEB/AppImage，以及顾客版 Windows x64、Intel Mac、Apple 芯片 Mac 均已重新构建并核验，共八个分发文件。所有包使用新的墨蓝双窗口图标；显示名为“远程连接”或“远程连接（顾客版）”，账号和在线地址簿入口关闭。
+
+| 原生目标 | 构建记录 | 实际打包程序检查 |
+| --- | --- | --- |
+| Windows 完整端 | [42583324215](https://github.com/553421138/rustdesk-nas-client/actions/runs/42583324215) | EXE 内置配置、EXE/MSI 图标、中文产品名与快捷方式、内部升级和打印机身份 |
+| Windows 顾客版 | [42584685346](https://github.com/553421138/rustdesk-nas-client/actions/runs/42584685346) | 同上，并核验顾客限制标记及独立身份 |
+| Intel Mac 完整端 | [42579669169](https://github.com/553421138/rustdesk-nas-client/actions/runs/42579669169) | 原生启动、全新配置、中文名称、实际公共同步接口、ICNS 及签名 |
+| Intel Mac 顾客版 | [42579672367](https://github.com/553421138/rustdesk-nas-client/actions/runs/42579672367) | 同上，并核验保存密码模式无法替换点击接受 |
+| Apple 芯片顾客版 | [42579676006](https://github.com/553421138/rustdesk-nas-client/actions/runs/42579676006) | 原生 ARM 启动、全新配置、中文名称、实际公共同步接口、ICNS、签名及点击接受 |
+
+五个桌面目标均通过三项显示名称、账号/地址簿开关和 Mac 快捷键路由回归测试；三个顾客目标另各通过两项连接限制测试。Mac 的原生安装包检查运行号记录在 `remote-connect-verification.json`。
+
+Android 和 Linux 的原生核心来自 [42576659128](https://github.com/553421138/rustdesk-nas-client/actions/runs/42576659128)，源码 `ab4e38ad864d6c5a0b9e37e393ccf5752d29c208`。Android 通用包在 [42581751492](https://github.com/553421138/rustdesk-nas-client/actions/runs/42581751492) 使用该次的三个原生库和桥接文件重新包装，AppImage 在 [42581753354](https://github.com/553421138/rustdesk-nas-client/actions/runs/42581753354) 从同一次已核验 DEB 包装；两次包装的源码为 `9ff4b7645010593fc2b7d13515631acd76216815`。后续非对应平台改动和下载修复没有替换这批原生库，各包的实际原生与包装提交分别记录，未将后续文档提交冒充为原生构建提交。
+
+Android 已核验固定签名、三种架构内置服务器配置、中文启动器名称和五种尺寸的实际图标。Linux 已运行全新配置 CLI、读取实际动态库的显示名和账号开关，并通过配置的公网域名向服务器注册；AppImage 核心与已核验 DEB 完全相同。Linux 注册测试使用 Docker 网络，并非独立外部设备。
+
+Mac 的 `Control + ←/→` 已通过路由及松键配对自动测试；真实 Mac 的 Mission Control 快捷键、跨网画面和键鼠、系统权限以及顾客接受弹窗仍需实际试连。Mac 采用临时签名，未使用开发者签名或公证。完整校验值、各包对应源码、构建与测试证据见 `remote-connect-verification.json`。
+
+## 前一批 RustDesk NAS 构建与验证
 
 完整端 Windows x64、Android、Intel Mac、Linux x64 均已编译完成，对应源码提交为 [`b38e428a6d48309600c13e538bef8591f1f98a6b`](https://github.com/553421138/rustdesk-nas-client/tree/b38e428a6d48309600c13e538bef8591f1f98a6b)。[完整端构建记录](https://github.com/553421138/rustdesk-nas-client/actions/runs/42546516007)中的上述平台任务均成功；运行总状态显示取消，是因为取消了暂缓的 Apple 芯片 Mac 任务。
 
@@ -65,7 +85,7 @@ Apple 芯片 Mac 顾客版也已完成[原生 ARM 编译、两项限制测试与
 
 顾客工作流在 Windows 和 macOS 上运行 `nas_customer_tests`，验证各类主动连接被拒绝，以及保存的密码模式无法替换点击确认。本次 Windows、Intel Mac 和 Apple 芯片 Mac 的该步骤均已通过；重新构建时以新的 Actions 结果为准。
 
-## 代码改动范围
+## 前一批配置与顾客限制的改动范围
 
 已对照固定版本的上游源码检查所有现有文件改动，运行路径只改动以下四处：
 
@@ -90,10 +110,10 @@ Mac 控制端保留本机 Control + ←/→ 给系统切换 Spaces，左右箭�
 
 本次现有文件及运行路径的必要改动（新逻辑放在独立模块）：
 
-- `.github/workflows/check-macos-package.yml`：传入定制名称、运行对应原生回归测试、在打包前写入系统显示名称；Mac 检查工作流增加可选的真实包名称、图标和签名核验，旧包检查保留。
-- `.github/workflows/customer-apple-silicon.yml`：传入定制名称、运行对应原生回归测试、在打包前写入系统显示名称；Mac 检查工作流增加可选的真实包名称、图标和签名核验，旧包检查保留。
-- `.github/workflows/customer-build.yml`：传入定制名称、运行对应原生回归测试、在打包前写入系统显示名称；Mac 检查工作流增加可选的真实包名称、图标和签名核验，旧包检查保留。
-- `.github/workflows/personal-build.yml`：传入定制名称、运行对应原生回归测试、在打包前写入系统显示名称；Mac 检查工作流增加可选的真实包名称、图标和签名核验，旧包检查保留。
+- `.github/workflows/check-macos-package.yml`：对实际 DMG 增加可选的中文名称、图标、签名和账号开关检查，读取真实动态库的公共同步接口；原有包检查保留。
+- `.github/workflows/customer-apple-silicon.yml`：ARM 顾客构建传入定制名称、运行原生回归测试，并在打包前写入本地化名称和重新签名。
+- `.github/workflows/customer-build.yml`：Windows 与 Intel Mac 顾客构建传入定制名称、运行原生回归测试，并完成平台名称和图标包装。
+- `.github/workflows/personal-build.yml`：各完整端构建传入定制名称；Windows 与 Intel Mac 运行原生回归测试，并完成平台名称和图标包装。
 - `appimage/AppImageBuilder-x86_64.yml`：AppImage 桌面入口显示新名称，可执行路径保留。
 - `flutter/android/app/src/main/AndroidManifest.xml`：Android 启动器、输入服务显示中文名称。
 - `flutter/android/app/src/main/res/mipmap-hdpi/ic_launcher.png`：替换该平台实际使用的应用、通知或托盘图标；只修改静态显示资源。

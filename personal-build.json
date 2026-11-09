@@ -14,51 +14,127 @@
   },
   "android_application_id": "cn.hkbeautyshop.rustdesk",
   "configuration_source_sha256": "3bccfa3de76819035ad1d65f5fcfaaba393ae2d25751164474bdc8aa4a5fc900",
-  "status": "all requested operator and customer platforms built and checked; interactive device verification pending",
+  "status": "RemoteConnect branded clients for all requested platforms built and package checks passed; interactive device verification pending",
   "editions": {
     "operator": {
+      "display_name": "远程连接",
       "workflow": "personal-build.yml",
-      "platforms": [
-        "Windows x64",
-        "Android",
-        "Intel macOS",
-        "Linux x64"
-      ],
+      "compile_environment": {
+        "RUSTDESK_NAS_DISPLAY_NAME": "远程连接"
+      },
       "connection_mode": "full",
-      "source_commit": "b38e428a6d48309600c13e538bef8591f1f98a6b",
-      "build_run": 42546516007,
-      "requested_platform_jobs": "success",
-      "run_total_status_note": "cancelled only because deferred Apple Silicon Mac job was cancelled",
-      "macos_package_check_run": 42552758534
+      "packages": [
+        {
+          "edition": "operator",
+          "platform": "Windows",
+          "file": "RemoteConnect-Full-1.5.1-Windows-x64.zip",
+          "bytes": 52838463,
+          "sha256": "c151f9c87c94d96f4d3e62336d46e1bf245eac027e0e51562ec91237bdac2601",
+          "source_commit": "2a7fb220834e45e0e68c51e83685a562e9cb61ec",
+          "build_run": "42583324215",
+          "contents_sha256": [
+            "f416b45f2ac197a85098243dcb01bfa38a91dc9f8230cbc502495df2b85e0b72  RemoteConnect-Full-1.5.1-Windows-x64.exe",
+            "7369b38a7d58839672eb52b616c67a6d8555f4a6278d6799d90ca5b767552772  RemoteConnect-Full-1.5.1-Windows-x64.msi"
+          ]
+        },
+        {
+          "edition": "operator",
+          "platform": "Intel Mac",
+          "file": "RemoteConnect-Full-1.5.1-macOS-Intel.zip",
+          "bytes": 37628537,
+          "sha256": "31bff62d5407343223f35f1fd515e2281686a13f55cbf02ee99f2e24feeb2be9",
+          "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+          "build_run": "42579669169",
+          "contents_sha256": [
+            "3144cb85c9feffd2ec52da8dba0684037837d82dcdd8e7eb7fdb8b242fba4507  RemoteConnect-Full-1.5.1-macOS-Intel.dmg"
+          ]
+        },
+        {
+          "edition": "operator",
+          "platform": "Android",
+          "file": "RemoteConnect-Full-1.5.1-Android-universal.apk",
+          "bytes": 78898011,
+          "sha256": "49d538a8ab2bd9ecdfbf0311931aa98147837b67cd514e2f30cd525c3e427ca2",
+          "native_source_commit": "ab4e38ad864d6c5a0b9e37e393ccf5752d29c208",
+          "native_build_run": 42576659128,
+          "packaging_source_commit": "9ff4b7645010593fc2b7d13515631acd76216815",
+          "packaging_run": 42581751492
+        },
+        {
+          "edition": "operator",
+          "platform": "Linux DEB",
+          "file": "RemoteConnect-Full-1.5.1-Linux-x64.deb",
+          "bytes": 25371324,
+          "sha256": "faf0a79c2e81236eef9f76165bcf7e95bb653a723f41026fd2e997c7b76d55cf",
+          "native_source_commit": "ab4e38ad864d6c5a0b9e37e393ccf5752d29c208",
+          "native_build_run": 42576659128
+        },
+        {
+          "edition": "operator",
+          "platform": "Linux AppImage",
+          "file": "RemoteConnect-Full-1.5.1-Linux-x64.AppImage",
+          "bytes": 88545784,
+          "sha256": "c876c70507e5e15ca5e93cd883615f9b5212d47766da9e12b1bfd43364937a33",
+          "native_source_commit": "ab4e38ad864d6c5a0b9e37e393ccf5752d29c208",
+          "native_build_run": 42576659128,
+          "packaging_source_commit": "9ff4b7645010593fc2b7d13515631acd76216815",
+          "packaging_run": 42581753354
+        }
+      ]
     },
     "customer": {
-      "workflow": "customer-build.yml",
-      "platforms": [
-        "Windows x64",
-        "Intel macOS",
-        "Apple Silicon macOS"
+      "display_name": "远程连接（顾客版）",
+      "workflows": [
+        "customer-build.yml",
+        "customer-apple-silicon.yml"
       ],
       "compile_environment": {
+        "RUSTDESK_NAS_DISPLAY_NAME": "远程连接",
         "RUSTDESK_NAS_EDITION": "customer"
       },
-      "connection_mode": "incoming only; outgoing connections and switch sides disabled",
+      "connection_mode": "incoming only; outgoing and switch sides disabled",
       "approval": "click required for each connection; locked",
       "application_name": "RustDeskCustomer",
       "macos_bundle_id": "cn.hkbeautyshop.rustdesk.customer",
-      "source_commit": "c2c7479f28f3d673b0088b1ebf79040d619b9fc7",
-      "build_run": 42550744536,
-      "build_status": "Windows x64 and Intel Mac packages produced and native restriction tests passed; Apple Silicon results recorded separately below",
-      "macos_package_check_run": 42558973698,
-      "packaged_click_approval_check": "passed, including attempted password-mode override",
-      "apple_silicon": {
-        "workflow": "customer-apple-silicon.yml",
-        "architecture": "aarch64",
-        "minimum_macos": "12.3",
-        "build_status": "success; both native restriction tests and packaged-app startup, network configuration and click-approval checks passed",
-        "source_commit": "7f8a5024f20759c262fcd990e05e48a8bf0e6ebd",
-        "build_run": 42560144179,
-        "macos_package_check_run": 42563946712
-      }
+      "packages": [
+        {
+          "edition": "customer",
+          "platform": "Windows",
+          "file": "RemoteConnect-Customer-1.5.1-Windows-x64.zip",
+          "bytes": 52859884,
+          "sha256": "7fc91d54d78fdcf7d50d36b452cc52450070ae266316bc328312551da9038b32",
+          "source_commit": "e273d629c5ef4293a55a8bedd6fb10e09bdcba38",
+          "build_run": "42584685346",
+          "contents_sha256": [
+            "ee67a8535abe5fdd9dc0fe5416a740d9974f5aded3679cc877d044b50e418ce6  RemoteConnect-Customer-1.5.1-Windows-x64.exe",
+            "01d194632b67e2fc470d4b6009f01ce54a2ff16c6e411041f008f1151dcc88ae  RemoteConnect-Customer-1.5.1-Windows-x64.msi"
+          ]
+        },
+        {
+          "edition": "customer",
+          "platform": "Intel Mac",
+          "file": "RemoteConnect-Customer-1.5.1-macOS-Intel.zip",
+          "bytes": 37634507,
+          "sha256": "227932aa488379b118f7c5ba545662f01a38daa1ddb48aedc151c84cc0a84692",
+          "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+          "build_run": "42579672367",
+          "contents_sha256": [
+            "67bbf9d0aa3401fd90ff35e16cf1a9ac38a203e3484409a71400a560937b52ff  RemoteConnect-Customer-1.5.1-macOS-Intel.dmg"
+          ]
+        },
+        {
+          "edition": "customer",
+          "platform": "Apple Silicon Mac",
+          "file": "RemoteConnect-Customer-1.5.1-macOS-AppleSilicon.zip",
+          "bytes": 30673179,
+          "sha256": "3a7ab1637ca8c157720780086c84afcdd2699bf874cf2a616c59de383e7570d3",
+          "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+          "build_run": "42579676006",
+          "contents_sha256": [
+            "d18bc912dc70317438b6279336284149d6746aa0ca4ca861192fc3080b553549  RemoteConnect-Customer-1.5.1-macOS-AppleSilicon.dmg"
+          ]
+        }
+      ]
     }
   },
   "public_port_check": {
@@ -66,7 +142,7 @@
     "tcp_21115_21116_21117": true,
     "udp_21116_protocol_reply": true
   },
-  "interactive_device_verification": "pending: actual screen, mouse/keyboard, OS permissions and customer acceptance",
+  "interactive_device_verification": "pending: actual screen, mouse/keyboard, OS permissions, customer acceptance and local Mac Spaces shortcut",
   "permission_policy": {
     "application_permissions": "original defaults; keyboard, clipboard, file transfer and audio enabled by default and adjustable",
     "system_permissions": "require device user authorization; not pre-granted",
@@ -82,6 +158,98 @@
     "macos_control_left_right": "local Spaces; arrows are not sent to the peer",
     "internal_identity": "unchanged for upgrade and configuration compatibility",
     "application_icon": "res/branding/app-icon.svg",
-    "status": "rebuild pending; previous build records above refer to the preceding packages"
+    "status": "all requested branded packages built and verified; physical interaction pending",
+    "verification_report": "remote-connect-verification.json",
+    "native_regression_tests": [
+      {
+        "platform": "windows-operator",
+        "build_run": 42583324215,
+        "job_id": 129047998762,
+        "source_commit": "2a7fb220834e45e0e68c51e83685a562e9cb61ec",
+        "branding_and_local_key_routing_tests_passed": 3,
+        "customer_restriction_tests_passed": 0
+      },
+      {
+        "platform": "windows-customer",
+        "build_run": 42584685346,
+        "job_id": 129052732539,
+        "source_commit": "e273d629c5ef4293a55a8bedd6fb10e09bdcba38",
+        "branding_and_local_key_routing_tests_passed": 3,
+        "customer_restriction_tests_passed": 2
+      },
+      {
+        "platform": "mac-intel-operator",
+        "build_run": 42579669169,
+        "job_id": 129036015440,
+        "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+        "branding_and_local_key_routing_tests_passed": 3,
+        "customer_restriction_tests_passed": 0
+      },
+      {
+        "platform": "mac-intel-customer",
+        "build_run": 42579672367,
+        "job_id": 129035999497,
+        "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+        "branding_and_local_key_routing_tests_passed": 3,
+        "customer_restriction_tests_passed": 2
+      },
+      {
+        "platform": "mac-arm-customer",
+        "build_run": 42579676006,
+        "job_id": 129038785635,
+        "source_commit": "a49d9388656c01a07f07d6f39b48ba1bdba841f9",
+        "branding_and_local_key_routing_tests_passed": 3,
+        "customer_restriction_tests_passed": 2
+      }
+    ]
+  },
+  "preceding_rustdesk_nas_build": {
+    "status": "all requested operator and customer platforms built and checked; interactive device verification pending",
+    "editions": {
+      "operator": {
+        "workflow": "personal-build.yml",
+        "platforms": [
+          "Windows x64",
+          "Android",
+          "Intel macOS",
+          "Linux x64"
+        ],
+        "connection_mode": "full",
+        "source_commit": "b38e428a6d48309600c13e538bef8591f1f98a6b",
+        "build_run": 42546516007,
+        "requested_platform_jobs": "success",
+        "run_total_status_note": "cancelled only because deferred Apple Silicon Mac job was cancelled",
+        "macos_package_check_run": 42552758534
+      },
+      "customer": {
+        "workflow": "customer-build.yml",
+        "platforms": [
+          "Windows x64",
+          "Intel macOS",
+          "Apple Silicon macOS"
+        ],
+        "compile_environment": {
+          "RUSTDESK_NAS_EDITION": "customer"
+        },
+        "connection_mode": "incoming only; outgoing connections and switch sides disabled",
+        "approval": "click required for each connection; locked",
+        "application_name": "RustDeskCustomer",
+        "macos_bundle_id": "cn.hkbeautyshop.rustdesk.customer",
+        "source_commit": "c2c7479f28f3d673b0088b1ebf79040d619b9fc7",
+        "build_run": 42550744536,
+        "build_status": "Windows x64 and Intel Mac packages produced and native restriction tests passed; Apple Silicon results recorded separately below",
+        "macos_package_check_run": 42558973698,
+        "packaged_click_approval_check": "passed, including attempted password-mode override",
+        "apple_silicon": {
+          "workflow": "customer-apple-silicon.yml",
+          "architecture": "aarch64",
+          "minimum_macos": "12.3",
+          "build_status": "success; both native restriction tests and packaged-app startup, network configuration and click-approval checks passed",
+          "source_commit": "7f8a5024f20759c262fcd990e05e48a8bf0e6ebd",
+          "build_run": 42560144179,
+          "macos_package_check_run": 42563946712
+        }
+      }
+    }
   }
 }
