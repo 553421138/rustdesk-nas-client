@@ -167,3 +167,5 @@ AppImage 配方同时保留中文桌面显示名和固定的构建文件名，�
 Mac 的托盘图标读取路径跳过通用彩色 PNG，使用已编译的单色模板，防止新 PNG 覆盖模板后显示成实心方块。该改动仅针对定制 Mac 分支；Windows、Linux 和原版构建路径不变。完整端与顾客版构建工作流增加可选 `mac-only` 输入，默认仍构建全部平台，用于只重编 Intel Mac；ARM 顾客版继续使用独立工作流。
 
 Android 包装重试：`flutter/android/build.gradle` 在保留现有仓库的同时优先加入 Maven Central，避免 Kotlin 编译依赖绕到 JCenter 失效链接而收到 504。新增 `.github/workflows/package-android.yml` 可从同一次源构建的 bridge 和三个已编译 Android 库重新生成并签名通用 APK；不重新编译 Rust 库。此调整只改变依赖下载及包装流程。
+
+Android 通用包与 AppImage 包装工作流通过 GitHub Release API 预取官方 Gradle 8.11.1 和 AppRun v2.0.0 hooks，再用固定 SHA-256 核对，以绕过普通发布下载链接持续返回 504。Gradle 仅在包装任务的临时工作区使用本地校验过的 ZIP；应用源码和 Gradle 版本不变。AppRun 主程序仍使用此前已固定源码和校验值的构建方式。

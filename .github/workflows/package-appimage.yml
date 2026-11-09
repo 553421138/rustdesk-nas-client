@@ -32,6 +32,12 @@ jobs:
     - name: Rename Binary
       run: |
         mv rustdesk-${{ env.VERSION }}-${{ env.APPIMAGE_ARCH }}.deb appimage/rustdesk.deb
+    - name: Download verified AppRun hooks using GitHub API
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release download v2.0.0 --repo AppImageCrafters/AppRun --pattern libapprun_hooks-Release-x86_64.so --dir appimage/appimage-build/AppRun/v2.0.0
+        printf '%s  %s\n' 1f64dd2161be3242f106c891b2daf27bbdd2103c20b28f57f61a56cdccb1eb6a appimage/appimage-build/AppRun/v2.0.0/libapprun_hooks-Release-x86_64.so | sha256sum -c -
     - name: Build appimage package
       shell: bash
       run: |

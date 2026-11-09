@@ -123,6 +123,14 @@ jobs:
         path: ./flutter/android/app/src/main/jniLibs/x86
         run-id: ${{ inputs.build-run }}
         github-token: ${{ github.token }}
+    - name: Download verified Gradle distribution using GitHub API
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release download v8.11.1 --repo gradle/gradle-distributions --pattern gradle-8.11.1-all.zip --dir "$RUNNER_TEMP"
+        printf '%s  %s\n' 89d4e70e4e84e2d2dfbb63e4daa53e21b25017cc70c37e4eea31ee51fb15098a "$RUNNER_TEMP/gradle-8.11.1-all.zip" | sha256sum -c -
+        sed -i "s|^distributionUrl=.*|distributionUrl=file://$RUNNER_TEMP/gradle-8.11.1-all.zip|" flutter/android/gradle/wrapper/gradle-wrapper.properties
+        printf '\ndistributionSha256Sum=89d4e70e4e84e2d2dfbb63e4daa53e21b25017cc70c37e4eea31ee51fb15098a\n' >> flutter/android/gradle/wrapper/gradle-wrapper.properties
     - name: Build rustdesk
       shell: bash
       env:
