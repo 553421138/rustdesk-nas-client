@@ -1,0 +1,55 @@
+name: Check RustDesk public ports
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  public-connectivity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Check public TCP ports and RustDesk UDP registration reply
+      shell: bash
+      run: |
+        python3 - <<'PYTHON'
+        import json, secrets, socket
+        from pathlib import Path
+        host = "nas.hk-beautyshop.cn"
+        address = socket.gethostbyname(host)
+        report = {"domain": host, "public_ip": address, "tcp_ports": {}, "udp_21116_rustdesk_reply": False}
+        for port in [21115, 21116, 21117]:
+            try:
+                with socket.create_connection((address, port), timeout=10):
+                    report["tcp_ports"][str(port)] = True
+            except OSError:
+                report["tcp_ports"][str(port)] = False
+        # RendezvousMessage.register_peer (field 6), containing RegisterPeer.id (1)
+        # and serial (2). Do not send RegisterPk or create a persistent device identity.
+        peer_id = str(900000000 + secrets.randbelow(99999999)).encode()
+        registration = b"\x0a" + bytes([len(peer_id)]) + peer_id + b"\x10\x03"
+        packet = b"\x32" + bytes([len(registration)]) + registration
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp:
+            udp.settimeout(5)
+            for attempt in range(3):
+                udp.sendto(packet, (address, 21116))
+                try:
+                    response, source = udp.recvfrom(4096)
+                    # RegisterPeerResponse (field 7) or ConfigUpdate (field 14).
+                    if source == (address, 21116) and response[:1] in [b"\x3a", b"\x72"]:
+                        report["udp_21116_rustdesk_reply"] = True
+                        break
+                except socket.timeout:
+                    pass
+        Path("public-port-check.json").write_text(json.dumps(report, indent=2) + "\n")
+        print(json.dumps(report))
+        assert all(report["tcp_ports"].values()), "One or more forwarded TCP ports are unreachable from GitHub"
+        assert report["udp_21116_rustdesk_reply"], "No RustDesk registration response received over public UDP 21116"
+        PYTHON
+    - name: Save public connectivity result
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: rustdesk-public-connectivity
+        path: public-port-check.json
+        if-no-files-found: warn
+        retention-days: 7
