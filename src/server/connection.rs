@@ -3041,7 +3041,8 @@ impl Connection {
             let is_logon = || crate::platform::is_prelogin();
 
             let allow_logon_screen_password =
-                crate::get_builtin_option(keys::OPTION_ALLOW_LOGON_SCREEN_PASSWORD) == "Y"
+                !config::is_customer_build()
+                    && crate::get_builtin_option(keys::OPTION_ALLOW_LOGON_SCREEN_PASSWORD) == "Y"
                     && is_logon();
 
             if (password::approve_mode() == ApproveMode::Click && !allow_logon_screen_password)
@@ -3999,6 +4000,9 @@ impl Connection {
                     #[cfg(feature = "flutter")]
                     #[cfg(not(any(target_os = "android", target_os = "ios")))]
                     Some(misc::Union::SwitchSidesRequest(s)) => {
+                        if config::is_customer_build() {
+                            return true;
+                        }
                         if let Ok(uuid) = uuid::Uuid::from_slice(&s.uuid.to_vec()[..]) {
                             if crate::server::insert_pending_switch_sides_uuid(
                                 self.lr.my_id.clone(),

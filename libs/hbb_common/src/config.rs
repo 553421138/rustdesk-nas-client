@@ -75,14 +75,20 @@ lazy_static::lazy_static! {
     pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     // Personal NAS build: network settings are part of the executable.
     pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> =
-        RwLock::new(HashMap::from([
-            ("custom-rendezvous-server".to_owned(), "nas.hk-beautyshop.cn:21116".to_owned()),
-            ("relay-server".to_owned(), "nas.hk-beautyshop.cn:21117".to_owned()),
-            ("key".to_owned(), "GevVI6bnGZ79VB8CAJ9InRZ3o566YJDQZW5mTOCGri4=".to_owned()),
-            ("api-server".to_owned(), "".to_owned()),
-            ("allow-auto-update".to_owned(), "N".to_owned()),
-            ("enable-check-update".to_owned(), "N".to_owned()),
-        ]));
+        RwLock::new({
+            let mut settings = HashMap::from([
+                ("custom-rendezvous-server".to_owned(), "nas.hk-beautyshop.cn:21116".to_owned()),
+                ("relay-server".to_owned(), "nas.hk-beautyshop.cn:21117".to_owned()),
+                ("key".to_owned(), "GevVI6bnGZ79VB8CAJ9InRZ3o566YJDQZW5mTOCGri4=".to_owned()),
+                ("api-server".to_owned(), "".to_owned()),
+                ("allow-auto-update".to_owned(), "N".to_owned()),
+                ("enable-check-update".to_owned(), "N".to_owned()),
+            ]);
+            if is_customer_build() {
+                settings.insert("approve-mode".to_owned(), "click".to_owned());
+            }
+            settings
+        });
     pub static ref DEFAULT_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref OVERWRITE_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref DEFAULT_LOCAL_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
@@ -2876,7 +2882,15 @@ fn is_option_can_save(
 }
 
 #[inline]
+pub fn is_customer_build() -> bool {
+    option_env!("RUSTDESK_NAS_EDITION") == Some("customer")
+}
+
+#[inline]
 pub fn is_incoming_only() -> bool {
+    if is_customer_build() {
+        return true;
+    }
     HARD_SETTINGS
         .read()
         .unwrap()

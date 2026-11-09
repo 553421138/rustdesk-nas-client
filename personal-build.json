@@ -13,6 +13,30 @@
     "enable-check-update": "N"
   },
   "android_application_id": "cn.hkbeautyshop.rustdesk",
-  "configuration_source_sha256": "f367e82bc61d97c1f3629eee7319ae08f3f79aad3dcec0e26c70a73f08a2f514",
-  "status": "source prepared; platform binaries still require compilation"
+  "configuration_source_sha256": "408a78aad979d4c921a1b3f530c2cc613075900794daae0a8b9831a778179a82",
+  "status": "operator compilation running; customer source prepared; device verification pending",
+  "editions": {
+    "operator": {
+      "workflow": "personal-build.yml",
+      "platforms": [
+        "Windows x64",
+        "Android",
+        "Intel macOS",
+        "Linux x64"
+      ],
+      "connection_mode": "full"
+    },
+    "customer": {
+      "workflow": "customer-build.yml",
+      "platforms": [
+        "Windows x64",
+        "Intel macOS"
+      ],
+      "compile_environment": {
+        "RUSTDESK_NAS_EDITION": "customer"
+      },
+      "connection_mode": "incoming only; outgoing connections and switch sides disabled",
+      "approval": "click required for each connection; locked"
+    }
+  }
 }

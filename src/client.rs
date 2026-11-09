@@ -431,6 +431,9 @@ impl Client {
         (i32, String),
         bool,
     )> {
+        if config::is_customer_build() {
+            bail!("Incoming only mode (customer edition)");
+        }
         if config::is_incoming_only() && !is_switch_sides_back(conn_type, &interface).await {
             bail!("Incoming only mode");
         }
@@ -5770,6 +5773,10 @@ mod webrtc_race_tests {
 #[cfg(test)]
 #[path = "client/tests/trusted_devices_tests.rs"]
 mod trusted_devices_tests;
+
+#[cfg(all(test, feature = "flutter"))]
+#[path = "client/tests/nas_customer_tests.rs"]
+mod nas_customer_tests;
 
 #[cfg(test)]
 mod kx_tests {
