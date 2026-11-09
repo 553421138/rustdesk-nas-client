@@ -1,0 +1,60 @@
+name: Package Linux AppImage from compiled DEB
+'on':
+  workflow_dispatch:
+    inputs:
+      build-run:
+        description: Build run containing the completed Linux DEB artifact
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+env:
+  VERSION: 1.5.1
+  UPLOAD_ARTIFACT: 'true'
+  APPIMAGE_ARCH: x86_64
+jobs:
+  package-appimage:
+    name: Package verified Linux DEB
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      with:
+        submodules: recursive
+    - name: Download Binary
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      with:
+        name: RustDesk-NAS-${{ env.VERSION }}-Linux-${{ env.APPIMAGE_ARCH }}
+        path: .
+        run-id: ${{ inputs.build-run }}
+        github-token: ${{ github.token }}
+    - name: Rename Binary
+      run: |
+        mv rustdesk-${{ env.VERSION }}-${{ env.APPIMAGE_ARCH }}.deb appimage/rustdesk.deb
+    - name: Build appimage package
+      shell: bash
+      run: |
+        # install libarchive-tools for bsdtar command used in AppImageBuilder.yml
+        sudo apt-get update -y
+        # https://github.com/AppImage/AppImageKit/wiki/FUSE
+        sudo apt-get install -y libarchive-tools libfuse2
+        # set-up appimage-builder
+        # https://github.com/AppImage/AppImageKit/issues/1395
+        sudo pip3 install "setuptools_scm<10"
+        sudo pip3 install git+https://github.com/rustdesk-org/appimage-builder.git
+        # run appimage-builder
+        pushd appimage
+        ./build-apprun.sh ${{ env.APPIMAGE_ARCH }}
+        sudo appimage-builder --skip-tests --recipe ./AppImageBuilder-${{ env.APPIMAGE_ARCH }}.yml
+        cmp AppDir/AppRun appimage-build/AppRun/v2.0.0/AppRun-Release-${{ env.APPIMAGE_ARCH }}
+    - name: Collect personal build packages
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: RustDesk-NAS-${{ env.VERSION }}-Linux-${{ env.APPIMAGE_ARCH }}-AppImage
+        path: |
+          ./appimage/rustdesk-${{ env.VERSION }}-*.AppImage
+        if-no-files-found: error
+        retention-days: 7
+      if: env.UPLOAD_ARTIFACT == 'true'
+    timeout-minutes: 60

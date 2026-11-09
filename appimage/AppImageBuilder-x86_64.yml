@@ -107,5 +107,6 @@ AppDir:
       command: ./AppRun
 AppImage:
   arch: x86_64
+  file_name: rustdesk-1.5.1-x86_64.AppImage
   update-information: guess
   comp: gzip

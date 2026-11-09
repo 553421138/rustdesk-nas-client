@@ -161,3 +161,5 @@ Mac 控制端保留本机 Control + ←/→ 给系统切换 Spaces，左右箭�
 - `res/msi/CustomActions/RemotePrinter.cpp` 与 `res/msi/Package/Package.wxs`：打印机升级检测从独立的内部名称属性读取原有设备身份，避免用中文显示名查找旧打印机。
 
 Mac 安装包检查在可选品牌核验中读取实际 dylib 的公共同步接口，核对中文名称、内部身份、账号和地址簿开关。新增的 `res/branding/verify_library.py` 只使用 Python 标准库读取既有 FFI，不增加生产接口或应用依赖。Linux 包也使用同一读取方式核验。
+
+AppImage 配方同时保留中文桌面显示名和固定的构建文件名，防止改名改变产物匹配路径。新增 `.github/workflows/package-appimage.yml` 可使用已完成构建的 DEB 单独打包并记录对应运行号，无需重复编译其他平台；使用相同的 AppRun 源码和打包命令。
