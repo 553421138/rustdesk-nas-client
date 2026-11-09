@@ -11,7 +11,7 @@
 
 ## 完整端与顾客版
 
-完整端供服务人员使用，保留原有控制和被控功能。顾客版仅提供 Windows x64 和 Intel Mac：
+完整端供服务人员使用，保留原有控制和被控功能。顾客版提供 Windows x64、Intel Mac，并正在新增 Apple 芯片 Mac：
 
 - 顾客打开软件，把本机 ID（连接码）提供给服务人员。
 - 服务人员使用完整端输入 ID 发起连接，顾客点击“接受”后才能控制，无需提供密码。
@@ -32,7 +32,9 @@ Android 的 applicationId 为 `cn.hkbeautyshop.rustdesk`，可以与官方客户
 
 `.github/workflows/personal-build.yml` 提供手动启动的 GitHub Actions 构建。源代码提交到你自己的仓库后，在 Actions 中选择 **Build personal RustDesk NAS clients** 并启动。
 
-目标包括 Windows x64 EXE、Android 各架构及通用 APK、macOS Intel DMG、Linux x64 DEB/AppImage。安装包仅保存为 Actions artifacts，不发布公开 Release，保留 7 天。Apple 芯片 Mac 版本暂缓。
+目标包括 Windows x64 EXE、Android 各架构及通用 APK、macOS Intel DMG、Linux x64 DEB/AppImage。安装包仅保存为 Actions artifacts，不发布公开 Release，保留 7 天。Apple 芯片完整端不在本次构建范围；Apple 芯片顾客版使用下面的独立流程。
+
+Apple 芯片顾客版使用 `.github/workflows/customer-apple-silicon.yml`，在 Actions 启动 **Build Apple Silicon customer RustDesk client**。它使用标准 `macos-15` M1 构建机，启用上游 ARM 版的 ScreenCaptureKit，最低 macOS 12.3，并在原生 ARM 环境运行同样的顾客限制测试。已有 Windows 和 Intel Mac 流程保留。打包后使用 **Check built Mac package**，选择 `customer`、`aarch64` 和对应构建运行编号，检查实际 ARM 应用启动和点击确认模式。当前该平台尚未编译。
 
 此目录已经将 hbb_common 固定版本作为普通源文件放入，不依赖保留上游 Git 子模块索引。
 

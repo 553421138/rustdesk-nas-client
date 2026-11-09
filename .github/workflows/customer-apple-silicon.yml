@@ -1,0 +1,190 @@
+name: Build Apple Silicon customer RustDesk client
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+env:
+  MAC_RUST_VERSION: '1.81'
+  FLUTTER_VERSION: 3.24.5
+  VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
+  VCPKG_COMMIT_ID: 9e593bb18ea69cc5095e012465dcd675a822ed0d
+  VERSION: 1.5.1
+  UPLOAD_ARTIFACT: 'true'
+  PUBLISH_UPDATE_METADATA: 'false'
+  RUSTDESK_NAS_EDITION: customer
+jobs:
+  generate-bridge:
+    uses: ./.github/workflows/bridge.yml
+  build-for-macOS:
+    name: ${{ matrix.job.target }}
+    runs-on: ${{ matrix.job.os }}
+    needs:
+    - generate-bridge
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+        - target: aarch64-apple-darwin
+          os: macos-15
+          extra-build-args: --screencapturekit
+          extra-cargo-features: ',screencapturekit'
+          arch: aarch64
+          vcpkg-triplet: arm64-osx
+    steps:
+    - name: Export GitHub Actions cache environment variables
+      uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+    - name: Checkout source code
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      with:
+        submodules: recursive
+    - name: Install build runtime
+      run: |
+        brew install llvm create-dmg
+        # pkg-config is handled in a separate step, because it may be already installed by `macos-latest`(14.7.1) runner
+        if command -v pkg-config &>/dev/null; then
+            echo "pkg-config is already installed"
+        else
+            brew install pkg-config
+        fi
+    - name: Build native NASM 2.16.03
+      run: |
+        set -euo pipefail
+        curl --fail --location --silent --show-error https://www.nasm.us/pub/nasm/releasebuilds/2.16.03/nasm-2.16.03.tar.xz --output "$RUNNER_TEMP/nasm-2.16.03.tar.xz"
+        printf '%s  %s\n' 1412a1c760bbd05db026b6c0d1657affd6631cd0a63cddb6f73cc6d4aa616148 "$RUNNER_TEMP/nasm-2.16.03.tar.xz" | shasum -a 256 -c -
+        tar -xf "$RUNNER_TEMP/nasm-2.16.03.tar.xz" -C "$RUNNER_TEMP"
+        cd "$RUNNER_TEMP/nasm-2.16.03"
+        ./configure --prefix="$RUNNER_TEMP/nasm-native"
+        make -j3
+        make install
+        echo "$RUNNER_TEMP/nasm-native/bin" >> "$GITHUB_PATH"
+        "$RUNNER_TEMP/nasm-native/bin/nasm" --version
+      shell: bash
+    - name: Install flutter
+      uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+      with:
+        channel: stable
+        flutter-version: ${{ env.FLUTTER_VERSION }}
+        architecture: arm64
+    - name: Patch flutter
+      run: |
+        cd $(dirname $(dirname $(which flutter)))
+        if [[ "3.24.5" == ${{env.FLUTTER_VERSION}} ]]; then
+          git apply ${{ github.workspace }}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff
+        fi
+    - name: Workaround for flutter issue
+      shell: bash
+      run: |
+        cd "$(dirname "$(which flutter)")"
+        # https://github.com/flutter/flutter/issues/133533
+        sed -i -e 's/_setFramesEnabledState(false);/\/\/_setFramesEnabledState(false);/g' ../packages/flutter/lib/src/scheduler/binding.dart
+        grep -n '_setFramesEnabledState(false);' ../packages/flutter/lib/src/scheduler/binding.dart
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
+      with:
+        toolchain: ${{ env.MAC_RUST_VERSION }}
+        targets: ${{ matrix.job.target }}
+        components: rustfmt
+    - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32
+      with:
+        prefix-key: ${{ matrix.job.os }}
+    - name: Restore bridge files
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      with:
+        name: bridge-artifact
+        path: ./
+    - name: Setup vcpkg with Github Actions binary cache
+      uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2
+      with:
+        vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+        doNotCache: false
+    - name: Install vcpkg dependencies
+      run: |
+        if ! $VCPKG_ROOT/vcpkg \
+          install \
+          --x-install-root="$VCPKG_ROOT/installed"; then
+          find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+            echo "$_1:"
+            echo "======"
+            cat "$_1"
+            echo "======"
+            echo ""
+          done
+          exit 1
+        fi
+        head -n 100 "${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log" || true
+      env:
+        VCPKG_DEFAULT_TRIPLET: arm64-osx
+        VCPKG_DEFAULT_HOST_TRIPLET: arm64-osx
+    - name: Show version information (Rust, cargo, Clang)
+      shell: bash
+      run: |
+        test "$(uname -m)" = arm64
+        clang --version || true
+        rustup -V
+        rustup toolchain list
+        rustup default
+        cargo -V
+        rustc -V
+    - name: Build rustdesk
+      run: |
+        if [ "${{ matrix.job.target }}" = "aarch64-apple-darwin" ]; then
+          MIN_MACOS_VERSION="12.3"
+          sed -i -e "s/MACOSX_DEPLOYMENT_TARGET\=[0-9]*.[0-9]*/MACOSX_DEPLOYMENT_TARGET=${MIN_MACOS_VERSION}/" build.py
+          sed -i -e "s/platform :osx, '.*'/platform :osx, '${MIN_MACOS_VERSION}'/" flutter/macos/Podfile
+          sed -i -e "s/osx_minimum_system_version = \"[0-9]*.[0-9]*\"/osx_minimum_system_version = \"${MIN_MACOS_VERSION}\"/" Cargo.toml
+          sed -i -e "s/MACOSX_DEPLOYMENT_TARGET = [0-9]*.[0-9]*;/MACOSX_DEPLOYMENT_TARGET = ${MIN_MACOS_VERSION};/" flutter/macos/Runner.xcodeproj/project.pbxproj
+          echo "MACOSX_DEPLOYMENT_TARGET=${MIN_MACOS_VERSION}" >> "$GITHUB_ENV"
+        fi
+        ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-build-args }}
+    - name: Verify customer connection restrictions
+      shell: bash
+      run: |
+        set -euo pipefail
+        FEATURES=$(./build.py --flutter --hwcodec --unix-file-copy-paste --screencapturekit --print-features)
+        cargo test --locked --release --lib nas_customer_tests --features "$FEATURES" -- --ignored --test-threads=1
+    - name: Use independent customer Mac application identity
+      shell: bash
+      run: |
+        set -euo pipefail
+        app_dir=./flutter/build/macos/Build/Products/Release
+        mv "$app_dir/RustDesk.app" "$app_dir/RustDeskCustomer.app"
+        customer_app="$app_dir/RustDeskCustomer.app"
+        mv "$customer_app/Contents/MacOS/RustDesk" "$customer_app/Contents/MacOS/RustDeskCustomer"
+        /usr/libexec/PlistBuddy -c 'Set :CFBundleExecutable RustDeskCustomer' "$customer_app/Contents/Info.plist"
+        /usr/libexec/PlistBuddy -c 'Set :CFBundleName RustDeskCustomer' "$customer_app/Contents/Info.plist"
+        /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier cn.hkbeautyshop.rustdesk.customer' "$customer_app/Contents/Info.plist"
+        /usr/libexec/PlistBuddy -c 'Set :CFBundleURLTypes:0:CFBundleURLSchemes:0 rustdeskcustomer' "$customer_app/Contents/Info.plist"
+        codesign --force --deep --sign - --entitlements ./flutter/macos/Runner/Release.entitlements "$customer_app"
+        codesign --verify --deep --strict "$customer_app"
+    - name: create unsigned dmg
+      if: env.UPLOAD_ARTIFACT == 'true'
+      run: |
+        CREATE_DMG="$(command -v create-dmg)"
+        CREATE_DMG="$(readlink -f "$CREATE_DMG")"
+        sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
+        create-dmg --icon "RustDeskCustomer.app" 200 190 --hide-extension "RustDeskCustomer.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-customer-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg ./flutter/build/macos/Build/Products/Release/RustDeskCustomer.app
+    - name: Rename rustdesk
+      if: env.UPLOAD_ARTIFACT == 'true'
+      shell: bash
+      env:
+        VERSION: ${{ env.VERSION }}
+        ARCH: ${{ matrix.job.arch }}
+      run: |
+        if [ -f "rustdesk-customer-${VERSION}.dmg" ]; then
+            mv "rustdesk-customer-${VERSION}.dmg" "rustdesk-customer-${VERSION}-${ARCH}.dmg"
+        fi
+        test -f "rustdesk-customer-${VERSION}-${ARCH}.dmg"
+    - name: Collect customer build packages
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: RustDesk-NAS-Customer-${{ env.VERSION }}-macOS-${{ matrix.job.arch }}
+        path: |
+          rustdesk*-${{ matrix.job.arch }}.dmg
+        if-no-files-found: error
+        retention-days: 7
+      if: env.UPLOAD_ARTIFACT == 'true' && env.PUBLISH_UPDATE_METADATA != 'true'
+    timeout-minutes: 180

@@ -1,4 +1,4 @@
-name: Check built Intel Mac package
+name: Check built Mac package
 'on':
   workflow_dispatch:
     inputs:
@@ -14,21 +14,30 @@ name: Check built Intel Mac package
         description: Build run containing the DMG artifact
         required: true
         type: string
+      architecture:
+        description: Mac CPU architecture
+        required: true
+        type: choice
+        options:
+        - x86_64
+        - aarch64
+        default: x86_64
 permissions:
   contents: read
   actions: read
 jobs:
   check-package:
-    runs-on: macos-15-intel
+    runs-on: ${{ inputs.architecture == 'aarch64' && 'macos-15' || 'macos-15-intel' }}
     timeout-minutes: 15
     env:
       VERIFY_EDITION: ${{ inputs.edition }}
       VERIFY_RUN_ID: ${{ inputs.run-id }}
+      VERIFY_ARCH: ${{ inputs.architecture }}
     steps:
     - name: Download built DMG
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
-        name: ${{ inputs.edition == 'customer' && 'RustDesk-NAS-Customer-1.5.1-macOS-x86_64' || 'RustDesk-NAS-1.5.1-macOS-x86_64'
+        name: ${{ format('RustDesk-NAS-{0}1.5.1-macOS-{1}', inputs.edition == 'customer' && 'Customer-' || '', inputs.architecture)
           }}
         run-id: ${{ inputs.run-id }}
         github-token: ${{ github.token }}
@@ -52,6 +61,14 @@ jobs:
         qa_home=$(mktemp -d)/clean-home
         mkdir -p "$qa_home"
         binary="/Applications/$app_name.app/Contents/MacOS/$app_name"
+        case "$VERIFY_ARCH" in
+          aarch64) native_arch=arm64 ;;
+          x86_64) native_arch=x86_64 ;;
+          *) exit 1 ;;
+        esac
+        test "$(uname -m)" = "$native_arch"
+        lipo -verify_arch "$native_arch" "$binary"
+        lipo -verify_arch "$native_arch" "/Applications/$app_name.app/Contents/Frameworks/liblibrustdesk.dylib"
         run_client() { sudo env HOME="$qa_home" XDG_CONFIG_HOME="$qa_home/.config" "$binary" "$@"; }
         test "$(run_client --version)" = 1.5.1
         check_option() {
@@ -71,12 +88,12 @@ jobs:
           check_option approve-mode click
           click_verified=true
         fi
-        printf '{"edition":"%s","run_id":"%s","startup_verified":true,"fresh_profile_network_verified":true,"click_approval_verified":%s}\n' "$VERIFY_EDITION" "$VERIFY_RUN_ID" "$click_verified" > macos-package-check.json
+        printf '{"edition":"%s","run_id":"%s","architecture":"%s","startup_verified":true,"fresh_profile_network_verified":true,"click_approval_verified":%s}\n' "$VERIFY_EDITION" "$VERIFY_RUN_ID" "$VERIFY_ARCH" "$click_verified" > macos-package-check.json
         cat macos-package-check.json
     - name: Save package startup verification
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: macOS-${{ inputs.edition }}-startup-verification
+        name: macOS-${{ inputs.edition }}${{ inputs.architecture == 'aarch64' && '-aarch64' || '' }}-startup-verification
         path: macos-package-check.json
         if-no-files-found: error
         retention-days: 7
