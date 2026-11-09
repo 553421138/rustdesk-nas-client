@@ -7,7 +7,7 @@
 - Key：`GevVI6bnGZ79VB8CAJ9InRZ3o566YJDQZW5mTOCGri4=`
 - API 服务器：空
 
-这些配置随各平台二进制一起编译，首次打开无需输入服务器配置。网络设置在该个人版本中固定；远程控制密码和设备授权沿用原版流程。
+这些配置随各平台二进制一起编译，首次打开无需输入服务器配置。网络设置在该个人版本中固定。完整端保留原有授权流程；顾客版使用下面的逐次点击确认流程。
 
 ## 完整端与顾客版
 
@@ -22,7 +22,7 @@
 
 在 Actions 中手动启动 **Build customer incoming-only RustDesk clients**。其工作流为 `.github/workflows/customer-build.yml`，编译时设置 `RUSTDESK_NAS_EDITION=customer`；完整端不设置这个变量。顾客版产物名称包含 `Customer`，文件名包含 `customer`，分发时应保留这个标记。仅被控限制适用于该顾客版程序。
 
-Mac 首次使用仍需由设备用户在系统设置中允许屏幕录制和辅助功能；这些系统权限无法由安装包预先授予。
+软件内的键鼠、剪贴板、文件传输、音频等权限保留原版默认开启状态，顾客可以调整，没有强制锁定为全部开放。Windows 的管理员/UAC 授权以及 Mac 的屏幕录制、辅助功能仍由设备用户决定；安装包不能预先授予这些系统权限。
 
 修改位于 `libs/hbb_common/src/config.rs`，包括默认服务器列表、服务器公钥和运行时网络选项覆盖。自动检查更新与自动更新已关闭，升级时应重新构建个人版本。
 
@@ -45,10 +45,31 @@ Android 的 applicationId 为 `cn.hkbeautyshop.rustdesk`，可以与官方客户
 
 未配置这些 Secrets 时，上游流程生成调试签名 APK，适合临时测试。正式自用时应保留个人签名密钥的备份，避免更换签名后无法覆盖安装。
 
-**当前状态：源码和工作流已准备；尚未完成平台编译或真机运行验证。**
+## 已完成的构建与验证
 
-顾客工作流还会在 Windows 和 macOS 上运行 `nas_customer_tests`，验证各类主动连接被拒绝，以及保存的密码模式无法替换点击确认。平台编译、测试与打包结果以对应 Actions 运行为准。
+完整端 Windows x64、Android、Intel Mac、Linux x64 均已编译完成，对应源码提交为 [`b38e428a6d48309600c13e538bef8591f1f98a6b`](https://github.com/553421138/rustdesk-nas-client/tree/b38e428a6d48309600c13e538bef8591f1f98a6b)。[完整端构建记录](https://github.com/553421138/rustdesk-nas-client/actions/runs/42546516007)中的上述平台任务均成功；运行总状态显示取消，是因为取消了暂缓的 Apple 芯片 Mac 任务。
 
-新增顾客功能涉及的现有运行路径：`libs/hbb_common/src/config.rs` 提供编译版本判断、强制点击确认和仅被控标志；`src/client.rs` 在建立任何主动连接前拒绝顾客端；`src/server/connection.rs` 禁止顾客端处理控制方向切换，并关闭锁屏密码免确认例外。未设置顾客编译变量时保留完整端原有路径。其余修改仅涉及构建工作流、说明和版本清单。
+已核验 Windows 便携包核心中的内置配置、Android 的固定签名及三个架构的内置配置、Linux 在全新配置下读取服务器设置并成功注册。AppImage 中的核心与已测试的 DEB 相同。Intel Mac 的实际打包程序已在全新配置下启动，并读取到内置服务器地址、中继和公钥，见 [Mac 安装包启动检查](https://github.com/553421138/rustdesk-nas-client/actions/runs/42552758534)。
+
+[外网端口检查](https://github.com/553421138/rustdesk-nas-client/actions/runs/42554192533)已从 GitHub 外部构建机确认 TCP 21115、21116、21117 可达，并收到 UDP 21116 的 RustDesk 协议回应。
+
+顾客版 Windows x64 和 Intel Mac 已完成[编译、原生限制测试与打包](https://github.com/553421138/rustdesk-nas-client/actions/runs/42550744536)，对应源码为 [`c2c7479f28f3d673b0088b1ebf79040d619b9fc7`](https://github.com/553421138/rustdesk-nas-client/tree/c2c7479f28f3d673b0088b1ebf79040d619b9fc7)。
+
+Windows 顾客版的 EXE 和 MSI 已核验内置配置、主动连接限制标记和独立应用身份。Intel Mac 顾客版已核验应用标识、Intel 架构和 DMG 完整性；[实际安装包启动检查](https://github.com/553421138/rustdesk-nas-client/actions/runs/42558973698)确认全新配置下的服务器、公钥和点击确认模式正确，保存密码模式也无法替换点击确认。
+
+真实设备上的画面、键盘鼠标、系统权限和逐次点击接受仍需实际试连。
+
+顾客工作流在 Windows 和 macOS 上运行 `nas_customer_tests`，验证各类主动连接被拒绝，以及保存的密码模式无法替换点击确认。本次两平台的该步骤均已通过；重新构建时以新的 Actions 结果为准。
+
+## 代码改动范围
+
+已对照固定版本的上游源码检查所有现有文件改动，运行路径只改动以下四处：
+
+- `libs/hbb_common/src/config.rs`：为两种版本固定服务器、公钥和更新设置；顾客版另使用独立应用身份、强制点击确认和仅被控标志。这是让客户端无需填写配置，以及不复用普通版配置/进程所必需的。
+- `src/client.rs`：顾客版在任何主动连接、IPC 或角色切换例外之前拒绝请求，防止绕过界面限制；完整端继续执行原有逻辑。
+- `src/server/connection.rs`：顾客版忽略切换控制方向请求，关闭锁屏密码免确认例外，保证每次由顾客接受；完整端继续执行原有逻辑。
+- `flutter/android/app/build.gradle`：仅更换 Android applicationId，让个人签名应用可与官方应用并存；原有 JNI/Flutter 接口不变。
+
+其余修改为构建工作流、说明、版本清单和两项顾客行为回归测试；未加入其他功能或整理既有实现。未设置顾客编译变量时，顾客专用分支不生效。
 
 `personal-build.json` 记录内置的公开网络配置和源码摘要。本源码目录不包含服务器私钥、远程控制密码或 API 凭据。

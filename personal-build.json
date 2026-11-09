@@ -14,7 +14,7 @@
   },
   "android_application_id": "cn.hkbeautyshop.rustdesk",
   "configuration_source_sha256": "82cf082f583adced8de7972228129d93500a96df2eb13c549b156cd3f64a063d",
-  "status": "operator compilation running; customer source prepared; device verification pending",
+  "status": "requested operator and customer platforms built; native restrictions and package checks passed; interactive device verification pending",
   "editions": {
     "operator": {
       "workflow": "personal-build.yml",
@@ -24,7 +24,12 @@
         "Intel macOS",
         "Linux x64"
       ],
-      "connection_mode": "full"
+      "connection_mode": "full",
+      "source_commit": "b38e428a6d48309600c13e538bef8591f1f98a6b",
+      "build_run": 42546516007,
+      "requested_platform_jobs": "success",
+      "run_total_status_note": "cancelled only because deferred Apple Silicon Mac job was cancelled",
+      "macos_package_check_run": 42552758534
     },
     "customer": {
       "workflow": "customer-build.yml",
@@ -38,7 +43,23 @@
       "connection_mode": "incoming only; outgoing connections and switch sides disabled",
       "approval": "click required for each connection; locked",
       "application_name": "RustDeskCustomer",
-      "macos_bundle_id": "cn.hkbeautyshop.rustdesk.customer"
+      "macos_bundle_id": "cn.hkbeautyshop.rustdesk.customer",
+      "source_commit": "c2c7479f28f3d673b0088b1ebf79040d619b9fc7",
+      "build_run": 42550744536,
+      "build_status": "packages produced; native restriction tests passed on both platforms",
+      "macos_package_check_run": 42558973698,
+      "packaged_click_approval_check": "passed, including attempted password-mode override"
     }
+  },
+  "public_port_check": {
+    "run": 42554192533,
+    "tcp_21115_21116_21117": true,
+    "udp_21116_protocol_reply": true
+  },
+  "interactive_device_verification": "pending: actual screen, mouse/keyboard, OS permissions and customer acceptance",
+  "permission_policy": {
+    "application_permissions": "original defaults; keyboard, clipboard, file transfer and audio enabled by default and adjustable",
+    "system_permissions": "require device user authorization; not pre-granted",
+    "customer_connection_approval": "click required for each connection"
   }
 }
