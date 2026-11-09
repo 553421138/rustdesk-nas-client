@@ -171,3 +171,5 @@ Android 包装重试：`flutter/android/build.gradle` 在保留现有仓库的�
 Android 通用包与 AppImage 包装工作流通过 GitHub Release API 预取官方 Gradle 8.11.1 和 AppRun v2.0.0 hooks，再用固定 SHA-256 核对，以绕过普通发布下载链接持续返回 504。Gradle 仅在包装任务的临时工作区使用本地校验过的 ZIP；应用源码和 Gradle 版本不变。AppRun 主程序仍使用此前已固定源码和校验值的构建方式。
 
 Windows 顾客版工作流为 USB 虚拟显示驱动使用相同的官方 GitHub Release API 下载及固定 SHA-256，修复完整编译后普通下载链接返回 504 的阻塞。增加可选 `windows-only` 输入以只重试该平台，默认构建范围不变；顾客版运行时代码不变。
+
+Windows MSI 的 `Package/@Codepage` 显式引用已生成的 `SummaryCodepage`，使中文名称使用 936，避免 WiX UI 本地化资源先加载的 1252 覆盖数据库编码；原版仍为 1252。两个 Windows 工作流从 Release API 预取被固定 vcpkg 版本要求的 Ninja 文件，由 vcpkg 自身固定 SHA-512 再次核对。完整端同样增加 `windows-only` 重试输入。Windows 打包前保留已通过测试的编译载荷，后续 MSI 包装重试可以复用，避免因工具下载或 MSI 错误丢失已编译结果。

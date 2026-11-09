@@ -35,7 +35,7 @@ env:
   MACOS_P12_BASE64: ${{ secrets.MACOS_P12_BASE64 }}
   UPLOAD_ARTIFACT: 'true'
   PUBLISH_UPDATE_METADATA: 'false'
-  RUSTDESK_NAS_DISPLAY_NAME: "\u8FDC\u7A0B\u8FDE\u63A5"
+  RUSTDESK_NAS_DISPLAY_NAME: 远程连接
   SIGN_BASE_URL: ${{ secrets.SIGN_BASE_URL }}-2
   RUSTDESK_NAS_EDITION: customer
 jobs:
@@ -162,6 +162,14 @@ jobs:
         vcpkgDirectory: C:\vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
         doNotCache: false
+    - name: Prefetch the pinned vcpkg Ninja tool using GitHub API
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release download v1.13.2 --repo ninja-build/ninja --pattern ninja-win.zip --dir "$env:RUNNER_TEMP"
+        if ($LASTEXITCODE -ne 0) { throw "Ninja download failed" }
+        New-Item -ItemType Directory -Force "$env:VCPKG_ROOT/downloads" | Out-Null
+        Copy-Item "$env:RUNNER_TEMP/ninja-win.zip" "$env:VCPKG_ROOT/downloads/ninja-win-1.13.2.zip"
     - name: Install vcpkg dependencies
       env:
         VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}
@@ -287,18 +295,30 @@ jobs:
         popd
         mkdir -p ./SignOutput
         mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-customer-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
+    - name: Preserve the compiled Windows payload before MSI packaging
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: compiled-windows-customer-payload
+        path: |
+          rustdesk/
+          SignOutput/*.exe
+        if-no-files-found: error
+        retention-days: 7
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce
       with:
         msbuild-architecture: ${{ matrix.job.arch == 'aarch64' && 'arm64' || 'x86' }}
     - name: Build msi
       if: env.UPLOAD_ARTIFACT == 'true'
-      run: "pushd ./res/msi\npython preprocess.py --arp --app-name RustDeskCustomer --display-name \"${env:RUSTDESK_NAS_DISPLAY_NAME}\uFF08\
-        \u987E\u5BA2\u7248\uFF09\" --conn-type incoming -d ../../rustdesk\nnuget restore msi.sln\n$msiPlatform =\
-        \ if ('${{ matrix.job.arch }}' -eq 'aarch64') { 'ARM64' } else { 'x64' }\nmsbuild msi.sln -p:Configuration=Release\
-        \ -p:Platform=$msiPlatform /p:TargetVersion=Windows10\n$msi = Get-ChildItem ./Package/bin/*/Release/en-us/Package.msi\
-        \ | Select-Object -First 1\nmv $msi.FullName ../../SignOutput/rustdesk-customer-${{ env.VERSION }}-${{ matrix.job.arch\
-        \ }}.msi\nsha256sum ../../SignOutput/rustdesk-*.msi\n"
+      run: |
+        pushd ./res/msi
+        python preprocess.py --arp --app-name RustDeskCustomer --display-name "${env:RUSTDESK_NAS_DISPLAY_NAME}（顾客版）" --conn-type incoming -d ../../rustdesk
+        nuget restore msi.sln
+        $msiPlatform = if ('${{ matrix.job.arch }}' -eq 'aarch64') { 'ARM64' } else { 'x64' }
+        msbuild msi.sln -p:Configuration=Release -p:Platform=$msiPlatform /p:TargetVersion=Windows10
+        $msi = Get-ChildItem ./Package/bin/*/Release/en-us/Package.msi | Select-Object -First 1
+        mv $msi.FullName ../../SignOutput/rustdesk-customer-${{ env.VERSION }}-${{ matrix.job.arch }}.msi
+        sha256sum ../../SignOutput/rustdesk-*.msi
     - name: Sign rustdesk self-extracted file
       if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'
       shell: bash

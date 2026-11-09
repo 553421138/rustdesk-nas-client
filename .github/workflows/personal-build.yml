@@ -7,6 +7,11 @@ name: Build personal RustDesk NAS clients
         required: false
         type: boolean
         default: false
+      windows-only:
+        description: Rebuild only the Windows operator edition
+        required: false
+        type: boolean
+        default: false
 env:
   SCITER_RUST_VERSION: '1.75'
   RUST_VERSION: '1.75'
@@ -156,6 +161,14 @@ jobs:
         vcpkgDirectory: C:\vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
         doNotCache: false
+    - name: Prefetch the pinned vcpkg Ninja tool using GitHub API
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release download v1.13.2 --repo ninja-build/ninja --pattern ninja-win.zip --dir "$env:RUNNER_TEMP"
+        if ($LASTEXITCODE -ne 0) { throw "Ninja download failed" }
+        New-Item -ItemType Directory -Force "$env:VCPKG_ROOT/downloads" | Out-Null
+        Copy-Item "$env:RUNNER_TEMP/ninja-win.zip" "$env:VCPKG_ROOT/downloads/ninja-win-1.13.2.zip"
     - name: Install vcpkg dependencies
       env:
         VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}
@@ -187,7 +200,9 @@ jobs:
         mv ./flutter/build/windows/${{ matrix.job.flutter-arch }}/runner/Release ./rustdesk
 
         # Download usbmmidd_v2.zip and extract it to ./rustdesk
-        Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip
+        gh release download usbmmidd_v2 --repo rustdesk-org/rdev --pattern usbmmidd_v2.zip
+        if ($LASTEXITCODE -ne 0) { throw "Virtual display driver download failed" }
+        if ((Get-FileHash usbmmidd_v2.zip -Algorithm SHA256).Hash -ne '629b51e9944762bae73948171c65d09a79595cf4c771a82ebc003fbba5b24f51') { throw "Unexpected virtual display driver checksum" }
         Expand-Archive usbmmidd_v2.zip -DestinationPath .
         Remove-Item -Path usbmmidd_v2\Win32 -Recurse
         Remove-Item -Path "usbmmidd_v2\deviceinstaller64.exe", "usbmmidd_v2\deviceinstaller.exe", "usbmmidd_v2\usbmmidd.bat"
@@ -219,6 +234,8 @@ jobs:
         } catch {
             Write-Host "Ingore the printer driver error."
         }
+      env:
+        GH_TOKEN: ${{ github.token }}
     - name: Verify personalized client behavior
       shell: bash
       run: |
@@ -270,6 +287,15 @@ jobs:
         popd
         mkdir -p ./SignOutput
         mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
+    - name: Preserve the compiled Windows payload before MSI packaging
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: compiled-windows-operator-payload
+        path: |
+          rustdesk/
+          SignOutput/*.exe
+        if-no-files-found: error
+        retention-days: 7
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce
       with:
@@ -544,8 +570,9 @@ jobs:
         retention-days: 7
       if: env.UPLOAD_ARTIFACT == 'true' && env.PUBLISH_UPDATE_METADATA != 'true'
     timeout-minutes: 180
+    if: ${{ inputs.windows-only != true }}
   build-rustdesk-android:
-    if: ${{ inputs.mac-only != true }}
+    if: ${{ inputs.mac-only != true && inputs.windows-only != true }}
     needs:
     - generate-bridge
     name: build rustdesk android apk ${{ matrix.job.target }}
@@ -810,7 +837,7 @@ jobs:
       if: env.ANDROID_SIGNING_KEY == null && env.UPLOAD_ARTIFACT == 'true'
     timeout-minutes: 180
   build-rustdesk-android-universal:
-    if: ${{ inputs.mac-only != true }}
+    if: ${{ inputs.mac-only != true && inputs.windows-only != true }}
     needs:
     - build-rustdesk-android
     name: build rustdesk android universal apk
@@ -974,7 +1001,7 @@ jobs:
       if: env.ANDROID_SIGNING_KEY == null && env.UPLOAD_ARTIFACT == 'true'
     timeout-minutes: 180
   build-rustdesk-linux:
-    if: ${{ inputs.mac-only != true }}
+    if: ${{ inputs.mac-only != true && inputs.windows-only != true }}
     needs:
     - generate-bridge
     name: build rustdesk linux ${{ matrix.job.target }}
@@ -1261,7 +1288,7 @@ jobs:
       if: env.UPLOAD_ARTIFACT == 'true'
     timeout-minutes: 180
   build-appimage:
-    if: ${{ inputs.mac-only != true }}
+    if: ${{ inputs.mac-only != true && inputs.windows-only != true }}
     name: Build appimage ${{ matrix.job.target }}
     needs:
     - build-rustdesk-linux
