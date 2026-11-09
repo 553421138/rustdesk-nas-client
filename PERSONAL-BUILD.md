@@ -17,7 +17,7 @@ Android 的 applicationId 为 `cn.hkbeautyshop.rustdesk`，可以与官方客户
 
 `.github/workflows/personal-build.yml` 提供手动启动的 GitHub Actions 构建。源代码提交到你自己的仓库后，在 Actions 中选择 **Build personal RustDesk NAS clients** 并启动。
 
-目标包括 Windows x64 EXE、Android 各架构及通用 APK、macOS Intel/Apple 芯片 DMG、Linux x64 DEB/AppImage。安装包仅保存为 Actions artifacts，不发布公开 Release，保留 7 天。
+目标包括 Windows x64 EXE、Android 各架构及通用 APK、macOS Intel DMG、Linux x64 DEB/AppImage。安装包仅保存为 Actions artifacts，不发布公开 Release，保留 7 天。Apple 芯片 Mac 版本暂缓。
 
 此目录已经将 hbb_common 固定版本作为普通源文件放入，不依赖保留上游 Git 子模块索引。
 
