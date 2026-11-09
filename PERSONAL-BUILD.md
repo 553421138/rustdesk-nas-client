@@ -169,3 +169,5 @@ Mac 的托盘图标读取路径跳过通用彩色 PNG，使用已编译的单色
 Android 包装重试：`flutter/android/build.gradle` 在保留现有仓库的同时优先加入 Maven Central，避免 Kotlin 编译依赖绕到 JCenter 失效链接而收到 504。新增 `.github/workflows/package-android.yml` 可从同一次源构建的 bridge 和三个已编译 Android 库重新生成并签名通用 APK；不重新编译 Rust 库。此调整只改变依赖下载及包装流程。
 
 Android 通用包与 AppImage 包装工作流通过 GitHub Release API 预取官方 Gradle 8.11.1 和 AppRun v2.0.0 hooks，再用固定 SHA-256 核对，以绕过普通发布下载链接持续返回 504。Gradle 仅在包装任务的临时工作区使用本地校验过的 ZIP；应用源码和 Gradle 版本不变。AppRun 主程序仍使用此前已固定源码和校验值的构建方式。
+
+Windows 顾客版工作流为 USB 虚拟显示驱动使用相同的官方 GitHub Release API 下载及固定 SHA-256，修复完整编译后普通下载链接返回 504 的阻塞。增加可选 `windows-only` 输入以只重试该平台，默认构建范围不变；顾客版运行时代码不变。

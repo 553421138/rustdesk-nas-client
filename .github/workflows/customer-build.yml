@@ -7,6 +7,11 @@ name: Build customer incoming-only RustDesk clients
         required: false
         type: boolean
         default: false
+      windows-only:
+        description: Rebuild only the Windows customer edition
+        required: false
+        type: boolean
+        default: false
 env:
   SCITER_RUST_VERSION: '1.75'
   RUST_VERSION: '1.75'
@@ -30,7 +35,7 @@ env:
   MACOS_P12_BASE64: ${{ secrets.MACOS_P12_BASE64 }}
   UPLOAD_ARTIFACT: 'true'
   PUBLISH_UPDATE_METADATA: 'false'
-  RUSTDESK_NAS_DISPLAY_NAME: 远程连接
+  RUSTDESK_NAS_DISPLAY_NAME: "\u8FDC\u7A0B\u8FDE\u63A5"
   SIGN_BASE_URL: ${{ secrets.SIGN_BASE_URL }}-2
   RUSTDESK_NAS_EDITION: customer
 jobs:
@@ -188,7 +193,9 @@ jobs:
         mv ./flutter/build/windows/${{ matrix.job.flutter-arch }}/runner/Release ./rustdesk
 
         # Download usbmmidd_v2.zip and extract it to ./rustdesk
-        Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip
+        gh release download usbmmidd_v2 --repo rustdesk-org/rdev --pattern usbmmidd_v2.zip
+        if ($LASTEXITCODE -ne 0) { throw "Virtual display driver download failed" }
+        if ((Get-FileHash usbmmidd_v2.zip -Algorithm SHA256).Hash -ne '629b51e9944762bae73948171c65d09a79595cf4c771a82ebc003fbba5b24f51') { throw "Unexpected virtual display driver checksum" }
         Expand-Archive usbmmidd_v2.zip -DestinationPath .
         Remove-Item -Path usbmmidd_v2\Win32 -Recurse
         Remove-Item -Path "usbmmidd_v2\deviceinstaller64.exe", "usbmmidd_v2\deviceinstaller.exe", "usbmmidd_v2\usbmmidd.bat"
@@ -220,6 +227,8 @@ jobs:
         } catch {
             Write-Host "Ingore the printer driver error."
         }
+      env:
+        GH_TOKEN: ${{ github.token }}
     - name: Use independent customer executable name
       run: |
         Rename-Item ./rustdesk/rustdesk.exe RustDeskCustomer.exe
@@ -284,15 +293,12 @@ jobs:
         msbuild-architecture: ${{ matrix.job.arch == 'aarch64' && 'arm64' || 'x86' }}
     - name: Build msi
       if: env.UPLOAD_ARTIFACT == 'true'
-      run: |
-        pushd ./res/msi
-        python preprocess.py --arp --app-name RustDeskCustomer --display-name "${env:RUSTDESK_NAS_DISPLAY_NAME}（顾客版）" --conn-type incoming -d ../../rustdesk
-        nuget restore msi.sln
-        $msiPlatform = if ('${{ matrix.job.arch }}' -eq 'aarch64') { 'ARM64' } else { 'x64' }
-        msbuild msi.sln -p:Configuration=Release -p:Platform=$msiPlatform /p:TargetVersion=Windows10
-        $msi = Get-ChildItem ./Package/bin/*/Release/en-us/Package.msi | Select-Object -First 1
-        mv $msi.FullName ../../SignOutput/rustdesk-customer-${{ env.VERSION }}-${{ matrix.job.arch }}.msi
-        sha256sum ../../SignOutput/rustdesk-*.msi
+      run: "pushd ./res/msi\npython preprocess.py --arp --app-name RustDeskCustomer --display-name \"${env:RUSTDESK_NAS_DISPLAY_NAME}\uFF08\
+        \u987E\u5BA2\u7248\uFF09\" --conn-type incoming -d ../../rustdesk\nnuget restore msi.sln\n$msiPlatform =\
+        \ if ('${{ matrix.job.arch }}' -eq 'aarch64') { 'ARM64' } else { 'x64' }\nmsbuild msi.sln -p:Configuration=Release\
+        \ -p:Platform=$msiPlatform /p:TargetVersion=Windows10\n$msi = Get-ChildItem ./Package/bin/*/Release/en-us/Package.msi\
+        \ | Select-Object -First 1\nmv $msi.FullName ../../SignOutput/rustdesk-customer-${{ env.VERSION }}-${{ matrix.job.arch\
+        \ }}.msi\nsha256sum ../../SignOutput/rustdesk-*.msi\n"
     - name: Sign rustdesk self-extracted file
       if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'
       shell: bash
@@ -564,5 +570,6 @@ jobs:
         retention-days: 7
       if: env.UPLOAD_ARTIFACT == 'true' && env.PUBLISH_UPDATE_METADATA != 'true'
     timeout-minutes: 180
+    if: ${{ inputs.windows-only != true }}
 permissions:
   contents: read
