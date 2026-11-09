@@ -155,3 +155,7 @@ Mac 控制端保留本机 Control + ←/→ 给系统切换 Spaces，左右箭�
 新增三项回归测试：显示名称与内部身份/账号开关，以及两项快捷键路由和松键配对行为。此前两项顾客连接限制测试保留，并继续在 Windows、Intel Mac 和 ARM Mac 原生运行。未在本机生成桥接代码，新增 FFI 的原生绑定由现有 CI 生成，Web 包装已手写补全。未设置定制编译变量时，运行时代码仍走原有路径；静态名称和图标资源属于该源码分支的品牌替换。
 
 本说明文件 `PERSONAL-BUILD.md` 本身仅补充本次功能、验证与必要改动范围。
+
+- `src/core_main.rs`：Windows URI 唤起查找与新窗口标题一致的显示名；配置、服务和 URI 身份保持不变。
+- `src/platform/windows/msi_registry.rs`：识别新安装包的中文显示名，同时继续接受旧安装名称，防止改名影响卸载入口和安装状态判断。
+- `res/msi/CustomActions/RemotePrinter.cpp` 与 `res/msi/Package/Package.wxs`：打印机升级检测从独立的内部名称属性读取原有设备身份，避免用中文显示名查找旧打印机。

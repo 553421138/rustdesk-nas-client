@@ -87,6 +87,10 @@ pub(super) fn is_matching_entry(
     }
 
     match entry.get_value::<String, _>(REG_NAME_DISPLAY_NAME) {
+        Ok(display_name)
+            if option_env!("RUSTDESK_NAS_DISPLAY_NAME").is_some()
+                && app_name == crate::get_app_name()
+                && display_name == crate::nas_customization::app_display_name() => Ok(true),
         Ok(display_name) => Ok(display_name.eq_ignore_ascii_case(app_name)),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(false),
         Err(err) => bail!(
