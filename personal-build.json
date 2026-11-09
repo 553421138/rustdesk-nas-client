@@ -1,0 +1,18 @@
+{
+  "client_version": "1.5.1",
+  "upstream_ref": "refs/tags/1.5.1",
+  "hbb_common_commit": "fae47e024dd83cef6aaecde0aa7d11731df11649",
+  "server": "nas.hk-beautyshop.cn",
+  "public_key": "GevVI6bnGZ79VB8CAJ9InRZ3o566YJDQZW5mTOCGri4=",
+  "network_settings": {
+    "custom-rendezvous-server": "nas.hk-beautyshop.cn:21116",
+    "relay-server": "nas.hk-beautyshop.cn:21117",
+    "key": "GevVI6bnGZ79VB8CAJ9InRZ3o566YJDQZW5mTOCGri4=",
+    "api-server": "",
+    "allow-auto-update": "N",
+    "enable-check-update": "N"
+  },
+  "android_application_id": "cn.hkbeautyshop.rustdesk",
+  "configuration_source_sha256": "f367e82bc61d97c1f3629eee7319ae08f3f79aad3dcec0e26c70a73f08a2f514",
+  "status": "source prepared; platform binaries still require compilation"
+}
