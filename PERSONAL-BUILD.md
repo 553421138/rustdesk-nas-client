@@ -159,3 +159,5 @@ Mac 控制端保留本机 Control + ←/→ 给系统切换 Spaces，左右箭�
 - `src/core_main.rs`：Windows URI 唤起查找与新窗口标题一致的显示名；配置、服务和 URI 身份保持不变。
 - `src/platform/windows/msi_registry.rs`：识别新安装包的中文显示名，同时继续接受旧安装名称，防止改名影响卸载入口和安装状态判断。
 - `res/msi/CustomActions/RemotePrinter.cpp` 与 `res/msi/Package/Package.wxs`：打印机升级检测从独立的内部名称属性读取原有设备身份，避免用中文显示名查找旧打印机。
+
+Mac 安装包检查在可选品牌核验中读取实际 dylib 的公共同步接口，核对中文名称、内部身份、账号和地址簿开关。新增的 `res/branding/verify_library.py` 只使用 Python 标准库读取既有 FFI，不增加生产接口或应用依赖。Linux 包也使用同一读取方式核验。

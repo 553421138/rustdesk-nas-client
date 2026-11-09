@@ -46,6 +46,8 @@ jobs:
       VERIFY_DISPLAY_NAME: ${{ inputs.display-name }}
       VERIFY_ICON_SHA256: ${{ inputs.icon-sha256 }}
     steps:
+    - name: Checkout package verification helpers
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
     - name: Download built DMG
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
@@ -98,6 +100,7 @@ jobs:
           [[ "$VERIFY_ICON_SHA256" =~ ^[a-f0-9]{64}$ ]]
           actual_icon_sha256=$(shasum -a 256 "/Applications/$app_name.app/Contents/Resources/AppIcon.icns" | awk '{print $1}')
           test "$actual_icon_sha256" = "$VERIFY_ICON_SHA256"
+          python3 res/branding/verify_library.py "/Applications/$app_name.app/Contents/Frameworks/liblibrustdesk.dylib" --edition "$VERIFY_EDITION"
           branding_verified=true
         fi
         run_client() { sudo env HOME="$qa_home" XDG_CONFIG_HOME="$qa_home/.config" "$binary" "$@"; }
