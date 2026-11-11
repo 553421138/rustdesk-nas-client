@@ -1,0 +1,120 @@
+name: Check built Windows package
+'on':
+  workflow_dispatch:
+    inputs:
+      edition:
+        description: Client edition
+        required: true
+        type: choice
+        options: [customer, operator]
+        default: customer
+      run-id:
+        description: Build run containing the Windows artifact
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  check-package:
+    runs-on: windows-2022
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [portable, msi]
+    env:
+      VERIFY_EDITION: ${{ inputs.edition }}
+      VERIFY_RUN_ID: ${{ inputs.run-id }}
+      VERIFY_PACKAGE: ${{ matrix.package }}
+    steps:
+    - name: Download the distributed Windows binaries
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      with:
+        name: ${{ format('RustDesk-NAS-{0}1.5.1-Windows-x86_64', inputs.edition == 'customer' && 'Customer-' || '') }}
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ github.token }}
+        path: packages
+    - name: Launch the package and check real server registration
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $internalName = if ($env:VERIFY_EDITION -eq 'customer') { 'RustDeskCustomer' } else { 'RustDesk' }
+        $label = if ($env:VERIFY_EDITION -eq 'customer') { 'Customer' } else { 'Full' }
+        New-Item -ItemType Directory -Path proof -Force | Out-Null
+        $report = [ordered]@{
+          edition = $env:VERIFY_EDITION
+          build_run = $env:VERIFY_RUN_ID
+          package = $env:VERIFY_PACKAGE
+          registered = $false
+        }
+        try {
+          $extension = if ($env:VERIFY_PACKAGE -eq 'portable') { '*.exe' } else { '*.msi' }
+          $files = @(Get-ChildItem packages -Filter $extension -Recurse)
+          if ($files.Count -ne 1) { throw "Expected exactly one $extension package" }
+          $report.package_sha256 = (Get-FileHash $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($env:VERIFY_PACKAGE -eq 'portable') {
+            $binary = Join-Path $PWD "RemoteConnect-$label-1.5.1-Windows-x64.exe"
+            Copy-Item $files[0].FullName $binary
+            Start-Process -FilePath $binary -WorkingDirectory $PWD | Out-Null
+          } else {
+            $installLog = Join-Path $PWD 'proof/msi-install.log'
+            $installer = Start-Process msiexec.exe -ArgumentList @('/i', ('"' + $files[0].FullName + '"'), '/qn', '/norestart', '/l*v', ('"' + $installLog + '"')) -Wait -PassThru
+            $report.install_exit_code = $installer.ExitCode
+            if ($installer.ExitCode -notin @(0, 3010)) { throw "MSI installation failed: $($installer.ExitCode)" }
+            $binary = Join-Path $env:ProgramFiles "$internalName/$internalName.exe"
+            Start-Process -FilePath $binary -WorkingDirectory (Split-Path $binary) | Out-Null
+          }
+          $configRoots = @(
+            (Join-Path $env:APPDATA $internalName),
+            (Join-Path $env:WINDIR "System32/config/systemprofile/AppData/Roaming/$internalName")
+          )
+          for ($attempt = 0; $attempt -lt 30; $attempt++) {
+            Start-Sleep -Seconds 2
+            foreach ($root in $configRoots) {
+              $configs = @(Get-ChildItem $root -Filter "$internalName.toml" -File -Recurse -ErrorAction SilentlyContinue)
+              foreach ($config in $configs) {
+                if ((Get-Content $config.FullName -Raw) -match '(?m)^key_confirmed\s*=\s*true\s*$') {
+                  $report.registered = $true
+                }
+              }
+            }
+            if ($report.registered) { break }
+          }
+          $report.service = @(Get-Service $internalName -ErrorAction SilentlyContinue | Select-Object Name, Status)
+          $report.processes = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^(RustDesk|RemoteConnect)' } | Select-Object Name, ProcessId, ParentProcessId, CommandLine)
+          $report.config_files = @()
+          $diagnostics = @()
+          foreach ($root in $configRoots) {
+            $report.config_files += @(Get-ChildItem $root -Filter '*.toml' -File -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+            foreach ($log in @(Get-ChildItem $root -Filter '*.log' -File -Recurse -ErrorAction SilentlyContinue)) {
+              $diagnostics += "LOG: $($log.FullName)"
+              $diagnostics += @(Get-Content $log.FullName | Select-String 'ERROR|WARN|server not started|try start server|ipc|rendezvous|start udp|start tcp|Latency|register_pk|UUID_MISMATCH' | Select-Object -Last 60 | ForEach-Object { $_.Line })
+            }
+          }
+          $diagnostics | Set-Content -Encoding utf8 proof/runtime.log
+          $report.latency_reply_seen = [bool]($diagnostics -match 'Latency of nas.hk-beautyshop.cn')
+          Add-Type -AssemblyName System.Windows.Forms
+          Add-Type -AssemblyName System.Drawing
+          $bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
+          $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+          $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+          $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+          $bitmap.Save((Join-Path $PWD 'proof/desktop.png'))
+          $graphics.Dispose()
+          $bitmap.Dispose()
+          if (-not $report.registered) { throw 'The packaged Windows app did not register with the configured ID server' }
+        } finally {
+          $report | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 proof/result.json
+          Get-Content proof/result.json
+          if (Test-Path proof/runtime.log) { Get-Content proof/runtime.log }
+          Get-Process $internalName -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        }
+    - name: Save the runtime result and screenshot
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: windows-${{ inputs.edition }}-${{ matrix.package }}-runtime
+        path: proof/
+        if-no-files-found: error
+        retention-days: 7
