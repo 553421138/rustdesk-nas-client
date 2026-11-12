@@ -120,7 +120,7 @@ jobs:
             }
             if ($report.registered) { break }
           }
-          python res/branding/verify_library.py $library --edition $env:VERIFY_EDITION --policy | Set-Content -Encoding utf8 proof/policy.json
+          python -X utf8 res/branding/verify_library.py $library --edition $env:VERIFY_EDITION --policy | Set-Content -Encoding utf8 proof/policy.json
           if ($LASTEXITCODE -ne 0) { throw 'Packaged library policy verification failed' }
           $report.service = @(Get-Service $internalName -ErrorAction SilentlyContinue | Select-Object Name, Status)
           $report.processes = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^(RustDesk|RemoteConnect)' } | Select-Object Name, ProcessId, ParentProcessId, CommandLine)
