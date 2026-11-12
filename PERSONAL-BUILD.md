@@ -226,3 +226,5 @@ Windows 顾客版的 vcpkg 工具预取同时包含其实际要求的 CMake 4.4.
 在现有 `nas_customization_tests` 中补充两项回归检查：旧配置试图重新开启更新时仍返回关闭，界面得到禁更及隐藏服务器设置标记；手动官方更新被拒绝且启动查询不留下更新地址。使用已有 CI 的原生 Rust 测试入口执行。Windows 包检查修正为读取服务实际使用的 LocalService 配置，并解析 Windows PowerShell 5 维护脚本。Mac 原生安装包检查通过既有同步 FFI 读取禁更与隐藏服务器设置标记。个人构建流程复用已验证的 Gradle 和 AppRun 官方下载及哈希校验方式，避免包装阶段再次使用失效链接。
 
 顾客版橙色问题：旧 Windows 便携包与 MSI 在全新原生环境均可完成真实服务器注册；这不能证明用户现有机器已恢复。维护脚本用于修复已有安装的配置与服务，不删除 ID、收藏或历史记录。
+
+Android 的 `flutter/lib/mobile/pages/settings_page.dart` 与 `connection_page.dart` 同样隐藏检查更新开关和下载新版本卡片，与既有后端禁更策略一致。个人 Windows 构建同步预取被固定 vcpkg 要求的 CMake 4.4.0，避免与顾客版相同的工具下载阻塞。

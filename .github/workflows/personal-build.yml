@@ -169,6 +169,8 @@ jobs:
         if ($LASTEXITCODE -ne 0) { throw "Ninja download failed" }
         New-Item -ItemType Directory -Force "$env:VCPKG_ROOT/downloads" | Out-Null
         Copy-Item "$env:RUNNER_TEMP/ninja-win.zip" "$env:VCPKG_ROOT/downloads/ninja-win-1.13.2.zip"
+        gh release download v4.4.0 --repo Kitware/CMake --pattern cmake-4.4.0-windows-x86_64.zip --dir "$env:VCPKG_ROOT/downloads"
+        if ($LASTEXITCODE -ne 0) { throw "CMake download failed" }
     - name: Install vcpkg dependencies
       env:
         VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}
