@@ -28,6 +28,15 @@ jobs:
       VERIFY_RUN_ID: ${{ inputs.run-id }}
       VERIFY_PACKAGE: ${{ matrix.package }}
     steps:
+    - name: Checkout maintenance scripts
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - name: Check Windows PowerShell 5 maintenance script syntax
+      shell: powershell
+      run: |
+        $tokens = $null
+        $errors = $null
+        [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD "res/nas/Windows-Maintenance.ps1"), [ref]$tokens, [ref]$errors) | Out-Null
+        if ($errors.Count -gt 0) { throw ($errors | Out-String) }
     - name: Download the distributed Windows binaries
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
@@ -67,6 +76,7 @@ jobs:
           }
           $configRoots = @(
             (Join-Path $env:APPDATA $internalName),
+            (Join-Path $env:WINDIR "ServiceProfiles/LocalService/AppData/Roaming/$internalName"),
             (Join-Path $env:WINDIR "System32/config/systemprofile/AppData/Roaming/$internalName")
           )
           for ($attempt = 0; $attempt -lt 30; $attempt++) {
@@ -84,9 +94,10 @@ jobs:
           $report.service = @(Get-Service $internalName -ErrorAction SilentlyContinue | Select-Object Name, Status)
           $report.processes = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^(RustDesk|RemoteConnect)' } | Select-Object Name, ProcessId, ParentProcessId, CommandLine)
           $report.config_files = @()
+          $report.config_roots = $configRoots
           $diagnostics = @()
           foreach ($root in $configRoots) {
-            $report.config_files += @(Get-ChildItem $root -Filter '*.toml' -File -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+            $report.config_files += @(Get-ChildItem $root -Filter '*.toml' -File -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
             foreach ($log in @(Get-ChildItem $root -Filter '*.log' -File -Recurse -ErrorAction SilentlyContinue)) {
               $diagnostics += "LOG: $($log.FullName)"
               $diagnostics += @(Get-Content $log.FullName | Select-String 'ERROR|WARN|server not started|try start server|ipc|rendezvous|start udp|start tcp|Latency|register_pk|UUID_MISMATCH' | Select-Object -Last 60 | ForEach-Object { $_.Line })
