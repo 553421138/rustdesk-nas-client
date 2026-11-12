@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [portable, msi]
+        package: [portable, msi, upgrade]
     env:
       VERIFY_EDITION: ${{ inputs.edition }}
       VERIFY_RUN_ID: ${{ inputs.run-id }}
@@ -44,6 +44,14 @@ jobs:
         run-id: ${{ inputs.run-id }}
         github-token: ${{ github.token }}
         path: packages
+    - name: Download the previous installation for upgrade verification
+      if: matrix.package == 'upgrade'
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      with:
+        name: ${{ format('RustDesk-NAS-{0}1.5.1-Windows-x86_64', inputs.edition == 'customer' && 'Customer-' || '') }}
+        run-id: ${{ inputs.edition == 'customer' && '42584685346' || '42583324215' }}
+        github-token: ${{ github.token }}
+        path: previous
     - name: Launch the package and check real server registration
       shell: pwsh
       run: |
@@ -67,6 +75,16 @@ jobs:
             Copy-Item $files[0].FullName $binary
             Start-Process -FilePath $binary -WorkingDirectory $PWD | Out-Null
           } else {
+            if ($env:VERIFY_PACKAGE -eq 'upgrade') {
+              $previous = @(Get-ChildItem previous -Filter '*.msi' -Recurse)
+              if ($previous.Count -ne 1) { throw 'Previous MSI is missing' }
+              $old = Start-Process msiexec.exe -ArgumentList @('/i', ('"' + $previous[0].FullName + '"'), '/qn', '/norestart') -Wait -PassThru
+              if ($old.ExitCode -notin @(0, 3010)) { throw "Previous MSI installation failed: $($old.ExitCode)" }
+              $oldConfig = Join-Path $env:WINDIR "ServiceProfiles/LocalService/AppData/Roaming/$internalName/config/$internalName.toml"
+              for ($attempt = 0; $attempt -lt 30 -and -not (Test-Path $oldConfig); $attempt++) { Start-Sleep -Seconds 2 }
+              $previousId = [regex]::Match((Get-Content $oldConfig -Raw), '(?m)^id\s*=\s*[^\r\n]+').Value
+              if (-not $previousId) { throw 'Previous installation did not create its device ID' }
+            }
             $installLog = Join-Path $PWD 'proof/msi-install.log'
             $installer = Start-Process msiexec.exe -ArgumentList @('/i', ('"' + $files[0].FullName + '"'), '/qn', '/norestart', '/l*v', ('"' + $installLog + '"')) -Wait -PassThru
             $report.install_exit_code = $installer.ExitCode
@@ -121,6 +139,11 @@ jobs:
           $graphics.Dispose()
           $bitmap.Dispose()
           if (-not $report.registered) { throw 'The packaged Windows app did not register with the configured ID server' }
+          if ($env:VERIFY_PACKAGE -eq 'upgrade') {
+            $currentId = [regex]::Match((Get-Content $oldConfig -Raw), '(?m)^id\s*=\s*[^\r\n]+').Value
+            $report.previous_device_id_preserved = $currentId -eq $previousId
+            if (-not $report.previous_device_id_preserved) { throw 'MSI upgrade changed the existing device ID' }
+          }
         } finally {
           $report | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 proof/result.json
           Get-Content proof/result.json
@@ -128,7 +151,7 @@ jobs:
           Get-Process $internalName -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
         }
     - name: Exercise maintenance scripts on the installed package
-      if: matrix.package == 'msi'
+      if: matrix.package != 'portable'
       shell: powershell
       run: |
         $ErrorActionPreference = 'Stop'
