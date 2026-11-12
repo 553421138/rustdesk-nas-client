@@ -2690,6 +2690,9 @@ pub fn get_builtin_option(key: &str) -> String {
     if key == "nas-disable-software-update" && crate::nas_customization::updates_disabled() {
         return "Y".to_owned();
     }
+    if key == keys::OPTION_HIDE_SERVER_SETTINGS && crate::nas_customization::updates_disabled() {
+        return "Y".to_owned();
+    }
     config::BUILTIN_SETTINGS
         .read()
         .unwrap()

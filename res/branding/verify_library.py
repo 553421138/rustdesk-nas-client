@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Read only the public synchronous getters from the actual packaged FRB 1.80.1 library."""
-import argparse,ctypes as c,json
+import argparse,ctypes as c,json,os
 from pathlib import Path
-parser=argparse.ArgumentParser();parser.add_argument('library',type=Path);parser.add_argument('--edition',choices=['operator','customer'],default='operator');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('library',type=Path);parser.add_argument('--edition',choices=['operator','customer'],default='operator');parser.add_argument('--policy',action='store_true');args=parser.parse_args()
 class Object(c.Structure):pass
 ObjectPointer=c.POINTER(Object)
 class Array(c.Structure):_fields_=[('length',c.c_ssize_t),('values',c.POINTER(ObjectPointer))]
@@ -11,6 +11,7 @@ class Value(c.Union):
  _fields_=[('boolean',c.c_bool),('int32',c.c_int32),('int64',c.c_int64),('string',c.c_char_p),('array',Array),('typed',TypedData),('align',c.c_uint64*5)]
 Object._fields_=[('kind',c.c_int32),('value',Value)]
 assert c.sizeof(Object)==48
+if os.name=='nt': dll_directory=os.add_dll_directory(str(args.library.resolve().parent))
 library=c.CDLL(str(args.library.resolve()))
 free=library.free_WireSyncReturn;free.argtypes=[ObjectPointer];free.restype=None
 def decode(pointer):
@@ -27,6 +28,18 @@ def decode(pointer):
   array=obj.value.typed;assert array.kind in [1,2,3] and 0<=array.length<10000
   return c.string_at(array.values,array.length).decode('utf-8')
  raise ValueError('Unexpected CObject kind: '+str(obj.kind))
+class WireBytes(c.Structure):_fields_=[('ptr',c.POINTER(c.c_uint8)),('len',c.c_int32)]
+def builtin_option(key):
+ data=key.encode('utf-8')
+ allocate=library.new_uint_8_list_0;allocate.argtypes=[c.c_int32];allocate.restype=c.POINTER(WireBytes)
+ argument=allocate(len(data));c.memmove(argument.contents.ptr,data,len(data))
+ function=library.wire_main_get_buildin_option;function.argtypes=[c.POINTER(WireBytes)];function.restype=ObjectPointer
+ pointer=function(argument)
+ if not pointer:raise RuntimeError('Null built-in option result')
+ try:
+  result=decode(pointer);assert len(result)==2 and result[1] is True,result
+  return result[0]
+ finally:free(pointer)
 def getter(name):
  function=getattr(library,'wire_'+name);function.argtypes=[];function.restype=ObjectPointer
  pointer=function()
@@ -42,4 +55,7 @@ assert result['main_get_app_name_sync']==internal,result
 for key in ['is_disable_account','is_disable_ab']:assert result[key] is True,result
 result['main_get_app_display_name_sync']=getter('main_get_app_display_name_sync')
 assert result['main_get_app_display_name_sync']==('远程连接（顾客版）' if args.edition=='customer' else '远程连接')
+if args.policy:
+ result['builtin_policy']={key:builtin_option(key) for key in ['nas-disable-software-update','hide-server-settings']}
+ assert all(value=='Y' for value in result['builtin_policy'].values()),result
 print(json.dumps({'file':str(args.library),'public_sync_getters_verified':True,**result},ensure_ascii=False))

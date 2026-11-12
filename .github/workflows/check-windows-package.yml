@@ -74,6 +74,10 @@ jobs:
             $binary = Join-Path $env:ProgramFiles "$internalName/$internalName.exe"
             Start-Process -FilePath $binary -WorkingDirectory (Split-Path $binary) | Out-Null
           }
+          $library = Join-Path (Split-Path $binary) 'librustdesk.dll'
+          if ($env:VERIFY_PACKAGE -eq 'portable') {
+            $library = Join-Path $env:LOCALAPPDATA "$internalName/librustdesk.dll"
+          }
           $configRoots = @(
             (Join-Path $env:APPDATA $internalName),
             (Join-Path $env:WINDIR "ServiceProfiles/LocalService/AppData/Roaming/$internalName"),
@@ -91,6 +95,8 @@ jobs:
             }
             if ($report.registered) { break }
           }
+          python res/branding/verify_library.py $library --edition $env:VERIFY_EDITION --policy | Set-Content -Encoding utf8 proof/policy.json
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged library policy verification failed' }
           $report.service = @(Get-Service $internalName -ErrorAction SilentlyContinue | Select-Object Name, Status)
           $report.processes = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^(RustDesk|RemoteConnect)' } | Select-Object Name, ProcessId, ParentProcessId, CommandLine)
           $report.config_files = @()
@@ -121,6 +127,25 @@ jobs:
           if (Test-Path proof/runtime.log) { Get-Content proof/runtime.log }
           Get-Process $internalName -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
         }
+    - name: Exercise maintenance scripts on the installed package
+      if: matrix.package == 'msi'
+      shell: powershell
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $actions = @('DisableUpdates')
+        if ($env:VERIFY_EDITION -eq 'customer') { $actions += 'RepairCustomer' }
+        $result = @()
+        foreach ($action in $actions) {
+          $log = Join-Path $PWD "proof/maintenance-$action.log"
+          $script = Join-Path $PWD 'res/nas/Windows-Maintenance.ps1'
+          $process = Start-Process powershell.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $script + '"'), '-Action', $action) -Wait -PassThru -RedirectStandardOutput $log -RedirectStandardError ($log + '.error')
+          Get-Content $log
+          if ($process.ExitCode -ne 0) { throw "Maintenance $action failed: $($process.ExitCode)" }
+          $name = if ($env:VERIFY_EDITION -eq 'customer') { 'RustDeskCustomer' } else { 'RustDesk' }
+          (Get-Service $name).WaitForStatus('Running', [TimeSpan]::FromSeconds(20))
+          $result += @{ action = $action; exit_code = $process.ExitCode; service_running = $true }
+        }
+        $result | ConvertTo-Json | Set-Content -Encoding utf8 proof/maintenance.json
     - name: Save the runtime result and screenshot
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

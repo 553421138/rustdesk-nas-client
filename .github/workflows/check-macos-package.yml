@@ -100,7 +100,7 @@ jobs:
           [[ "$VERIFY_ICON_SHA256" =~ ^[a-f0-9]{64}$ ]]
           actual_icon_sha256=$(shasum -a 256 "/Applications/$app_name.app/Contents/Resources/AppIcon.icns" | awk '{print $1}')
           test "$actual_icon_sha256" = "$VERIFY_ICON_SHA256"
-          python3 res/branding/verify_library.py "/Applications/$app_name.app/Contents/Frameworks/liblibrustdesk.dylib" --edition "$VERIFY_EDITION"
+          python3 res/branding/verify_library.py "/Applications/$app_name.app/Contents/Frameworks/liblibrustdesk.dylib" --edition "$VERIFY_EDITION" --policy
           branding_verified=true
         fi
         run_client() { sudo env HOME="$qa_home" XDG_CONFIG_HOME="$qa_home/.config" "$binary" "$@"; }
