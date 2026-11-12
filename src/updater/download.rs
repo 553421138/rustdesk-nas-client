@@ -13,6 +13,9 @@ pub(super) fn ensure_verified_update_artifact(
     expected_size: u64,
     expected_sha256: &str,
 ) -> ResultType<()> {
+    if crate::nas_customization::updates_disabled() {
+        bail!("Software updates are disabled for this customized client");
+    }
     if let Some(file_size) = cached_update_artifact_size(file_path)? {
         if file_size == expected_size {
             match verify_file_sha256(file_path, expected_sha256) {

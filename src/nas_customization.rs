@@ -6,6 +6,11 @@ pub fn app_display_name() -> String {
     }
 }
 
+pub fn updates_disabled() -> bool {
+    option_env!("RUSTDESK_NAS_DISPLAY_NAME").is_some()
+        || hbb_common::config::is_customer_build()
+}
+
 #[cfg(test)]
 mod nas_customization_tests {
     #[test]

@@ -195,3 +195,25 @@ Windows 顾客版工作流为 USB 虚拟显示驱动使用相同的官方 GitHub
 Windows MSI 的 `Package/@Codepage` 显式引用已生成的 `SummaryCodepage`，使中文名称使用 936，避免 WiX UI 本地化资源先加载的 1252 覆盖数据库编码；原版仍为 1252。两个 Windows 工作流从 Release API 预取被固定 vcpkg 版本要求的 Ninja 文件，由 vcpkg 自身固定 SHA-512 再次核对。完整端同样增加 `windows-only` 重试输入。Windows 打包前保留已通过测试的编译载荷，后续 MSI 包装重试可以复用，避免因工具下载或 MSI 错误丢失已编译结果。
 
 Windows 顾客版的 vcpkg 工具预取同时包含其实际要求的 CMake 4.4.0，使用同样的官方 Release API，下载后由 vcpkg 的工具校验值核验。此修改只处理构建机依赖下载。
+
+## 关闭定制版本更新与 Windows 维护脚本
+
+补齐此前漏掉的更新配置路径：启动检查更新使用 `LocalConfig` 的 `enable-check-update`，原先将此键放在服务的 `OVERWRITE_SETTINGS` 中，不能覆盖界面本地配置。现在在定制构建的 `OVERWRITE_LOCAL_SETTINGS` 中固定为 `N`，同时从程序中阻止官方更新查询、更新包下载和后台更新调度，隐藏更新提示及开关。此修改同时适用于完整端和顾客版，需要重新编译后进入二进制；已有安装包没有因此发生变化。
+
+本次既有文件及运行路径的必要改动：
+
+- `libs/hbb_common/src/config.rs`：仅在定制构建中锁定本地检查更新选项，修复上述配置层放错的问题。
+- `src/nas_customization.rs`：增加由现有定制编译变量判定的禁更策略；不引入运行时状态。
+- `src/common.rs`：更新查询返回空结果并清除缓存地址；通过既有同步内置选项接口向界面暴露禁更标志，无需新增 FFI 或重新生成桥接代码。
+- `src/updater.rs`：定制版本不启动 Windows/macOS 更新调度；手动检查和 macOS root 更新入口也被禁用，防止服务配置或手动调用绕过。
+- `src/updater/download.rs`：定制版本拒绝取得官方更新包，包括已有更新进度页或缓存路径，避免通过下载入口覆盖程序。
+- `flutter/lib/common.dart`：读取既有同步接口中的禁更标志，在注册更新事件和计时器前退出。
+- `flutter/lib/desktop/pages/desktop_home_page.dart`：隐藏定制版本的更新卡片和升级入口。
+- `flutter/lib/desktop/pages/desktop_setting_page.dart`：隐藏定制版本的检查更新、自动升级复选框。
+- 本说明文件：记录原因、改动范围与验证限制。
+
+未设置定制名称编译变量、也不是顾客版时，所有新增分支均不生效；上游原有更新实现保持。没有调整安装、卸载、服务器协议、远控授权或输入处理路径。
+
+新增 `res/nas/Disable-Updates.bat` 和 `Repair-Customer-Service.bat`，共用 `Windows-Maintenance.ps1`。前者为当前 Windows 用户及服务配置关闭更新；后者修复已安装的定制顾客版服务、恢复本项目服务器配置、每次点击确认及对应程序防火墙规则，并关闭更新。两个脚本均在修改前备份涉及的配置文件，保留设备 ID、密码等其他字段。说明见 `res/nas/README.md`。
+
+按用户要求，本次未执行测试、脚本或构建；源码通过人工逐项检查，Windows 上的实际效果由用户试用。脚本不能从既有二进制中移除更新入口，不能把已被官方程序覆盖的版本恢复为顾客版；这类情况需重新安装定制版本。

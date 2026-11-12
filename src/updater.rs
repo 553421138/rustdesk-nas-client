@@ -99,11 +99,17 @@ pub fn update_controlling_session_count(count: usize) {
 
 #[allow(dead_code)]
 pub fn start_auto_update() {
+    if crate::nas_customization::updates_disabled() {
+        return;
+    }
     let _sender = TX_MSG.lock().unwrap();
 }
 
 #[allow(dead_code)]
 pub fn manually_check_update() -> ResultType<()> {
+    if crate::nas_customization::updates_disabled() {
+        bail!("Software updates are disabled for this customized client");
+    }
     let sender = TX_MSG.lock().unwrap();
     sender.send(UpdateMsg::CheckUpdate)?;
     Ok(())
@@ -472,6 +478,9 @@ fn wait_for_failed_update_retry() {
 /// Called from `start_os_service()` which runs as root via LaunchDaemon.
 #[cfg(target_os = "macos")]
 pub fn start_auto_update_macos() {
+    if crate::nas_customization::updates_disabled() {
+        return;
+    }
     let spawn_result = std::thread::Builder::new()
         .name("rustdesk-auto-update".to_owned())
         .spawn(|| {
@@ -513,6 +522,9 @@ pub fn start_auto_update_macos() {
 
 #[cfg(target_os = "macos")]
 pub fn check_update_as_root() -> ResultType<bool> {
+    if crate::nas_customization::updates_disabled() {
+        return Ok(false);
+    }
     let _update_lock = acquire_mac_update_lock()?;
     // Allow-auto-update setting
     if !config::Config::get_bool_option(keys::OPTION_ALLOW_AUTO_UPDATE) {

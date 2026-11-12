@@ -4065,7 +4065,12 @@ void earlyAssert() {
   assert('\1' == '1');
 }
 
+bool get softwareUpdatesDisabled =>
+    !isWeb &&
+    bind.mainGetBuildinOption(key: 'nas-disable-software-update') == 'Y';
+
 void checkUpdate() {
+  if (softwareUpdatesDisabled) return;
   if (!isWeb) {
     if (!bind.isCustomClient()) {
       platformFFI.registerEventHandler(
