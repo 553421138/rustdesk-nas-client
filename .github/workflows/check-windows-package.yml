@@ -155,7 +155,6 @@ jobs:
           $report | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 proof/result.json
           Get-Content proof/result.json
           if (Test-Path proof/runtime.log) { Get-Content proof/runtime.log }
-          Get-Process $internalName -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
         }
     - name: Exercise maintenance scripts on the installed package
       if: matrix.package != 'portable'
@@ -176,6 +175,13 @@ jobs:
           $result += @{ action = $action; exit_code = $process.ExitCode; service_running = $true }
         }
         $result | ConvertTo-Json | Set-Content -Encoding utf8 proof/maintenance.json
+    - name: Stop the verified application after all runtime checks
+      if: always()
+      shell: powershell
+      run: |
+        $name = if ($env:VERIFY_EDITION -eq 'customer') { 'RustDeskCustomer' } else { 'RustDesk' }
+        Stop-Service $name -Force -ErrorAction SilentlyContinue
+        Get-Process $name -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     - name: Save the runtime result and screenshot
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
