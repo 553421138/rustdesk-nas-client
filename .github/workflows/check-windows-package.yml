@@ -81,8 +81,15 @@ jobs:
               $old = Start-Process msiexec.exe -ArgumentList @('/i', ('"' + $previous[0].FullName + '"'), '/qn', '/norestart') -Wait -PassThru
               if ($old.ExitCode -notin @(0, 3010)) { throw "Previous MSI installation failed: $($old.ExitCode)" }
               $oldConfig = Join-Path $env:WINDIR "ServiceProfiles/LocalService/AppData/Roaming/$internalName/config/$internalName.toml"
-              for ($attempt = 0; $attempt -lt 30 -and -not (Test-Path $oldConfig); $attempt++) { Start-Sleep -Seconds 2 }
-              $previousId = [regex]::Match((Get-Content $oldConfig -Raw), '(?m)^id\s*=\s*[^\r\n]+').Value
+              $identityPattern = '(?m)^(?:enc_id|id)\s*=\s*[''"][^''"\r\n]+[''"]'
+              for ($attempt = 0; $attempt -lt 30; $attempt++) {
+                if (Test-Path $oldConfig) {
+                  $oldText = Get-Content $oldConfig -Raw
+                  $previousId = [regex]::Match($oldText, $identityPattern).Value
+                  if ($previousId -and $oldText -match '(?m)^key_confirmed\s*=\s*true\s*$') { break }
+                }
+                Start-Sleep -Seconds 2
+              }
               if (-not $previousId) { throw 'Previous installation did not create its device ID' }
             }
             $installLog = Join-Path $PWD 'proof/msi-install.log'
@@ -140,7 +147,7 @@ jobs:
           $bitmap.Dispose()
           if (-not $report.registered) { throw 'The packaged Windows app did not register with the configured ID server' }
           if ($env:VERIFY_PACKAGE -eq 'upgrade') {
-            $currentId = [regex]::Match((Get-Content $oldConfig -Raw), '(?m)^id\s*=\s*[^\r\n]+').Value
+            $currentId = [regex]::Match((Get-Content $oldConfig -Raw), $identityPattern).Value
             $report.previous_device_id_preserved = $currentId -eq $previousId
             if (-not $report.previous_device_id_preserved) { throw 'MSI upgrade changed the existing device ID' }
           }
