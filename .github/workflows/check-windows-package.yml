@@ -167,8 +167,19 @@ jobs:
         foreach ($action in $actions) {
           $log = Join-Path $PWD "proof/maintenance-$action.log"
           $script = Join-Path $PWD 'res/nas/Windows-Maintenance.ps1'
-          $process = Start-Process powershell.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $script + '"'), '-Action', $action) -Wait -PassThru -RedirectStandardOutput $log -RedirectStandardError ($log + '.error')
-          Get-Content $log
+          $info = New-Object Diagnostics.ProcessStartInfo
+          $info.FileName = 'powershell.exe'
+          $info.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + $script + '" -Action ' + $action
+          $info.UseShellExecute = $false
+          $info.CreateNoWindow = $true
+          $info.RedirectStandardOutput = $true
+          $info.RedirectStandardError = $true
+          $process = [Diagnostics.Process]::Start($info)
+          $stdout = $process.StandardOutput.ReadToEndAsync()
+          $stderr = $process.StandardError.ReadToEndAsync()
+          if (-not $process.WaitForExit(60000)) { $process.Kill(); throw "Maintenance $action timed out" }
+          if ($stdout.Wait(1000)) { $stdout.Result | Tee-Object -FilePath $log }
+          if ($stderr.Wait(1000)) { $stderr.Result | Set-Content -Encoding utf8 ($log + '.error') }
           if ($process.ExitCode -ne 0) { throw "Maintenance $action failed: $($process.ExitCode)" }
           $name = if ($env:VERIFY_EDITION -eq 'customer') { 'RustDeskCustomer' } else { 'RustDesk' }
           (Get-Service $name).WaitForStatus('Running', [TimeSpan]::FromSeconds(20))
